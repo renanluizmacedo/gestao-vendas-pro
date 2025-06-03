@@ -63,7 +63,7 @@ return [
     |
     */
 
-    'logo' => '<b>Admin</b>LTE',
+    'logo' => '<b>GestorVendas</b>PRO',
     'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
@@ -257,7 +257,7 @@ return [
     */
 
     'use_route_url' => false,
-    'dashboard_url' => 'home',
+    'dashboard_url' => '/products',
     'logout_url' => 'logout',
     'login_url' => 'login',
     'register_url' => 'register',
@@ -306,12 +306,18 @@ return [
         ],
 
         // Sidebar items:
+
         [
             'text' => 'blog',
             'url' => '#',
             'can' => 'manage-blog',
         ],
         ['header' => 'Menu'],
+        [
+            'text' => 'Vendas',
+            'url'  => '/sales',
+            'icon' => 'fas fa-fw fa-shopping-cart',
+        ],
         [
             'text' => 'Produtos',
             'url' => '/products',
@@ -320,7 +326,7 @@ return [
         [
             'text' => 'Clientes',
             'url' => '/customers',
-            'icon' => 'fas fa-fw fa-shopping-bag',
+            'icon' => 'fas fa-fw fa-user',
         ],
         [
             'text' => 'Categorias',

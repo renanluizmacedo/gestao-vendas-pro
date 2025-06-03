@@ -73,7 +73,6 @@
         </div>
     </div>
 
-    <!-- Modal Remover -->
     <div class="modal fade" id="removeModal" tabindex="-1" aria-labelledby="removeModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -106,7 +105,6 @@
         </div>
     </div>
 
-    <!-- Modal Criar -->
     <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <form action="{{ route('customers.store') }}" method="POST" id="createForm">
@@ -141,7 +139,6 @@
         </div>
     </div>
 
-    <!-- Modal Editar -->
     <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <form id="editForm" method="POST">
