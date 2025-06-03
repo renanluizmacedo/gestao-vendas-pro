@@ -98,14 +98,12 @@
         const selectProduto = document.getElementById('selectProduto');
         const btnAdicionar = document.getElementById('btnAdicionarProduto');
 
-        // Atualiza informações do cliente
         selectCliente.addEventListener('change', function() {
             const selected = this.selectedOptions[0];
             document.getElementById('clienteNome').innerText = selected.dataset.nome || '-';
             document.getElementById('clienteTelefone').innerText = selected.dataset.telefone || '-';
         });
 
-        // Ativa ou desativa o botão conforme a seleção de produto
         selectProduto.addEventListener('change', function() {
             const selected = this.selectedOptions[0];
             btnAdicionar.disabled = selected.disabled;
@@ -133,6 +131,7 @@
             preco,
             quantidade: 1
         });
+
         atualizarTabela();
 
         select.selectedIndex = 0;
@@ -148,40 +147,58 @@
         const produto = produtosAdicionados.find(p => p.id == id);
         if (produto) {
             produto.quantidade = novaQuantidade;
-            atualizarTabela();
+            atualizarSubtotal(id);
+            atualizarTotais();
         }
+    }
+
+    function alterarPreco(id, novoPreco, formatar = false) {
+        if (!novoPreco) return;
+
+        let precoConvertido = parseFloat(novoPreco.replace(',', '.'));
+
+        if (isNaN(precoConvertido) || precoConvertido < 0.01) return;
+
+        const produto = produtosAdicionados.find(p => p.id == String(id));
+        if (produto) {
+            produto.preco = precoConvertido;
+
+            if (formatar) {
+                // Formatar input
+                const input = document.querySelector(`#preco-${id}`);
+                if (input) {
+                    input.value = produto.preco.toFixed(2).replace('.', ',');
+                }
+            }
+
+            atualizarSubtotal(id);
+            atualizarTotais();
+        }
+    }
+
+    function atualizarSubtotal(id) {
+        const produto = produtosAdicionados.find(p => p.id == id);
+        if (produto) {
+            const subtotal = produto.preco * produto.quantidade;
+            const span = document.getElementById(`subtotal-${id}`);
+            if (span) {
+                span.innerText = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+            }
+        }
+    }
+
+    function atualizarTotais() {
+        const quantidadeTotal = produtosAdicionados.reduce((acc, p) => acc + p.quantidade, 0);
+        const valorTotal = produtosAdicionados.reduce((acc, p) => acc + p.preco * p.quantidade, 0);
+
+        document.getElementById('totalProdutos').innerText = quantidadeTotal;
+        document.getElementById('valorTotal').innerText = valorTotal.toFixed(2).replace('.', ',');
     }
 
     function removerProduto(id) {
         produtosAdicionados = produtosAdicionados.filter(p => p.id != id);
         atualizarTabela();
     }
-
-function alterarPreco(id, novoPreco, formatar = false) {
-    if (!novoPreco) return;
-
-    let precoConvertido = parseFloat(novoPreco.replace(',', '.'));
-
-    if (isNaN(precoConvertido) || precoConvertido < 0.01) return;
-
-    const produto = produtosAdicionados.find(p => p.id == String(id));
-    if (produto) {
-        produto.preco = precoConvertido;
-
-        // Só re-renderiza a tabela se for para formatar
-        if (formatar) {
-            atualizarTabela();
-        } else {
-            // Atualiza apenas totais dinamicamente
-            const subtotal = produto.preco * produto.quantidade;
-            total = produtosAdicionados.reduce((acc, p) => acc + p.preco * p.quantidade, 0);
-            document.getElementById('valorTotal').innerText = total.toFixed(2).replace('.', ',');
-        }
-    }
-}
-
-
-
 
     function atualizarTabela() {
         const tbody = document.querySelector('#tabelaProdutos tbody');
@@ -193,37 +210,33 @@ function alterarPreco(id, novoPreco, formatar = false) {
             total += subtotal;
 
             tbody.innerHTML += `
-        <tr>
-            <td>${produto.nome}</td>
-            <td>
-                <input 
-                    type="text" 
-                    class="form-control form-control-sm" 
-                    value="${produto.preco.toFixed(2).replace('.', ',')}" 
-                    oninput="alterarPreco('${produto.id}', this.value, false)"
-                    onblur="alterarPreco('${produto.id}', this.value, true)">
-
-            </td>
-            <td>
-                <input 
-                    type="number" 
-                    class="form-control form-control-sm" 
-                    min="1" 
-                    value="${produto.quantidade}" 
-                    oninput="alterarQuantidade('${produto.id}', this.value)">
-            </td>
-            <td>R$ ${(subtotal).toFixed(2).replace('.', ',')}</td>
-            <td>
-                <button class="btn btn-danger btn-sm" onclick="removerProduto('${produto.id}')">Remover</button>
-            </td>
-        </tr>
-        `;
+                <tr>
+                    <td>${produto.nome}</td>
+                    <td>
+                        <input 
+                            type="text" 
+                            id="preco-${produto.id}"
+                            class="form-control form-control-sm" 
+                            value="${produto.preco.toFixed(2).replace('.', ',')}" 
+                            oninput="alterarPreco('${produto.id}', this.value, false)"
+                            onblur="alterarPreco('${produto.id}', this.value, true)">
+                    </td>
+                    <td>
+                        <input 
+                            type="number" 
+                            class="form-control form-control-sm" 
+                            min="1" 
+                            value="${produto.quantidade}" 
+                            oninput="alterarQuantidade('${produto.id}', this.value)">
+                    </td>
+                    <td><span id="subtotal-${produto.id}">R$ ${subtotal.toFixed(2).replace('.', ',')}</span></td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" onclick="removerProduto('${produto.id}')">Remover</button>
+                    </td>
+                </tr>
+            `;
         });
 
-        const quantidadeTotal = produtosAdicionados.reduce((acc, p) => acc + p.quantidade, 0);
-        document.getElementById('totalProdutos').innerText = quantidadeTotal;
-        document.getElementById('valorTotal').innerText = total.toFixed(2).replace('.', ',');
-
-
+        atualizarTotais();
     }
 </script>
