@@ -37,7 +37,9 @@
                 @endforeach
             </select>
 
-            <button class="btn btn-sm btn-success mt-2" onclick="adicionarProduto()">Adicionar Produto</button>
+            <button id="btnAdicionarProduto" class="btn btn-sm btn-success mt-2" onclick="adicionarProduto()" disabled>
+                Adicionar Produto
+            </button>
         </div>
     </div>
 
@@ -72,12 +74,14 @@
                 <thead>
                     <tr>
                         <th>Produto</th>
-                        <th>Preço</th>
+                        <th>Preço Unitário</th>
+                        <th>Quantidade</th>
+                        <th>Total</th>
                         <th>Ação</th>
                     </tr>
                 </thead>
+
                 <tbody>
-                    {{-- conteúdo dinâmico via JS --}}
                 </tbody>
             </table>
         </div>
@@ -89,22 +93,34 @@
     let produtosAdicionados = [];
     let total = 0;
 
-    document.getElementById('selectCliente').addEventListener('change', function() {
-        const selected = this.selectedOptions[0];
-        document.getElementById('clienteNome').innerText = selected.dataset.nome || '-';
-        document.getElementById('clienteTelefone').innerText = selected.dataset.telefone || '-';
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectCliente = document.getElementById('selectCliente');
+        const selectProduto = document.getElementById('selectProduto');
+        const btnAdicionar = document.getElementById('btnAdicionarProduto');
+
+        // Atualiza informações do cliente
+        selectCliente.addEventListener('change', function() {
+            const selected = this.selectedOptions[0];
+            document.getElementById('clienteNome').innerText = selected.dataset.nome || '-';
+            document.getElementById('clienteTelefone').innerText = selected.dataset.telefone || '-';
+        });
+
+        // Ativa ou desativa o botão conforme a seleção de produto
+        selectProduto.addEventListener('change', function() {
+            const selected = this.selectedOptions[0];
+            btnAdicionar.disabled = selected.disabled;
+        });
     });
 
     function adicionarProduto() {
         const select = document.getElementById('selectProduto');
         const selected = select.selectedOptions[0];
-        if (!selected) return;
+        if (!selected || selected.disabled) return;
 
         const nome = selected.dataset.nome;
         const preco = parseFloat(selected.dataset.preco);
         const id = selected.value;
 
-        // Evita duplicação
         const existe = produtosAdicionados.find(p => p.id == id);
         if (existe) {
             alert('Produto já adicionado!');
@@ -114,9 +130,26 @@
         produtosAdicionados.push({
             id,
             nome,
-            preco
+            preco,
+            quantidade: 1
         });
         atualizarTabela();
+
+        select.selectedIndex = 0;
+        document.getElementById('btnAdicionarProduto').disabled = true;
+    }
+
+    function alterarQuantidade(id, novaQuantidade) {
+        if (novaQuantidade === '') return;
+
+        novaQuantidade = parseInt(novaQuantidade);
+        if (isNaN(novaQuantidade) || novaQuantidade < 1) return;
+
+        const produto = produtosAdicionados.find(p => p.id == id);
+        if (produto) {
+            produto.quantidade = novaQuantidade;
+            atualizarTabela();
+        }
     }
 
     function removerProduto(id) {
@@ -124,23 +157,73 @@
         atualizarTabela();
     }
 
+function alterarPreco(id, novoPreco, formatar = false) {
+    if (!novoPreco) return;
+
+    let precoConvertido = parseFloat(novoPreco.replace(',', '.'));
+
+    if (isNaN(precoConvertido) || precoConvertido < 0.01) return;
+
+    const produto = produtosAdicionados.find(p => p.id == String(id));
+    if (produto) {
+        produto.preco = precoConvertido;
+
+        // Só re-renderiza a tabela se for para formatar
+        if (formatar) {
+            atualizarTabela();
+        } else {
+            // Atualiza apenas totais dinamicamente
+            const subtotal = produto.preco * produto.quantidade;
+            total = produtosAdicionados.reduce((acc, p) => acc + p.preco * p.quantidade, 0);
+            document.getElementById('valorTotal').innerText = total.toFixed(2).replace('.', ',');
+        }
+    }
+}
+
+
+
+
     function atualizarTabela() {
         const tbody = document.querySelector('#tabelaProdutos tbody');
         tbody.innerHTML = '';
         total = 0;
 
         produtosAdicionados.forEach(produto => {
-            total += produto.preco;
+            const subtotal = produto.preco * produto.quantidade;
+            total += subtotal;
+
             tbody.innerHTML += `
-                <tr>
-                    <td>${produto.nome}</td>
-                    <td>R$ ${produto.preco.toFixed(2).replace('.', ',')}</td>
-                    <td><button class="btn btn-danger btn-sm" onclick="removerProduto(${produto.id})">Remover</button></td>
-                </tr>
-            `;
+        <tr>
+            <td>${produto.nome}</td>
+            <td>
+                <input 
+                    type="text" 
+                    class="form-control form-control-sm" 
+                    value="${produto.preco.toFixed(2).replace('.', ',')}" 
+                    oninput="alterarPreco('${produto.id}', this.value, false)"
+                    onblur="alterarPreco('${produto.id}', this.value, true)">
+
+            </td>
+            <td>
+                <input 
+                    type="number" 
+                    class="form-control form-control-sm" 
+                    min="1" 
+                    value="${produto.quantidade}" 
+                    oninput="alterarQuantidade('${produto.id}', this.value)">
+            </td>
+            <td>R$ ${(subtotal).toFixed(2).replace('.', ',')}</td>
+            <td>
+                <button class="btn btn-danger btn-sm" onclick="removerProduto('${produto.id}')">Remover</button>
+            </td>
+        </tr>
+        `;
         });
 
-        document.getElementById('totalProdutos').innerText = produtosAdicionados.length;
+        const quantidadeTotal = produtosAdicionados.reduce((acc, p) => acc + p.quantidade, 0);
+        document.getElementById('totalProdutos').innerText = quantidadeTotal;
         document.getElementById('valorTotal').innerText = total.toFixed(2).replace('.', ',');
+
+
     }
 </script>
