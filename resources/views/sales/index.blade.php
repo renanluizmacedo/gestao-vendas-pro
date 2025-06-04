@@ -197,17 +197,17 @@
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-        <td>${numeroParcela} x</td>
-        <td><input type="date" class="form-control form-control-sm data-vencimento" value="${data}"></td>
-        <td>
-            <input type="number" step="0.01" class="form-control form-control-sm valor-parcela" value="${valor.toFixed(2)}">
-        </td>
-        <td style="text-align:center;">
-            <button type="button" class="btn btn-danger btn-sm btn-remover-parcela">
-                <i class="fas fa-trash-alt"></i>
-            </button>
-        </td>
-    `;
+                    <td>${numeroParcela} x</td>
+                    <td><input type="date" class="form-control form-control-sm data-vencimento" value="${data}"></td>
+                    <td>
+                        <input type="number" step="0.01" class="form-control form-control-sm valor-parcela" value="${valor.toFixed(2)}">
+                    </td>
+                    <td style="text-align:center;">
+                        <button type="button" class="btn btn-danger btn-sm btn-remover-parcela">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                `;
                 tabelaVencimentos.appendChild(tr);
             }
 
@@ -274,17 +274,21 @@
                 linhas.forEach((tr) => {
                     const input = tr.querySelector('.valor-parcela');
                     if (input && !input.disabled) {
-                        input.value = valorParcela.toFixed(2); // valor numérico com ponto decimal
+                        input.value = valorParcela.toFixed(2);
                     }
                 });
+            }
+
+            function parseValorMonetario(valor) {
+                return parseFloat(valor.replace(/[R$\s\.]/g, '').replace(',', '.')) || 0;
             }
 
             function recalcularParcelasAPartirDeEdicao(inputEditado) {
                 const linhas = Array.from(tabelaVencimentos.querySelectorAll('tr'));
                 const indexEditado = linhas.findIndex(tr => tr.contains(inputEditado));
 
-                let valorTotal = obterValorTotalVenda();
-                let valorEditado = parseFloat(inputEditado.value.replace(/[R$\s\.]/g, '').replace(',', '.')) || 0;
+                const valorTotal = obterValorTotalVenda();
+                const valorEditado = parseValorMonetario(inputEditado.value);
 
                 if (valorEditado > valorTotal) {
                     alert('O valor da parcela não pode ser maior que o valor total da venda.');
@@ -295,31 +299,45 @@
                 const qtdParcelas = linhas.length;
                 if (qtdParcelas <= 1) return;
 
-                const parcelasRestantes = qtdParcelas - 1;
-                const valorRestante = valorTotal - valorEditado;
+                // Marca como editado
+                inputEditado.setAttribute('data-editado', 'true');
+
+                // Soma os valores já editados
+                let somaEditados = 0;
+                let qtdRestante = 0;
+
+                linhas.forEach((tr) => {
+                    const input = tr.querySelector('.valor-parcela');
+                    if (input.getAttribute('data-editado') === 'true') {
+                        somaEditados += parseValorMonetario(input.value);
+                    } else {
+                        qtdRestante++;
+                    }
+                });
+
+                const valorRestante = valorTotal - somaEditados;
 
                 if (valorRestante < 0) {
-                    alert('Valor das parcelas excede o valor total da venda.');
+                    alert('A soma das parcelas editadas excede o valor total.');
+                    inputEditado.removeAttribute('data-editado');
                     atualizarValorParcela();
                     return;
                 }
 
-                const valorParcelaRestante = (valorRestante / parcelasRestantes);
+                const valorParcelaRestante = qtdRestante > 0 ? valorRestante / qtdRestante : 0;
 
-                linhas.forEach((tr, idx) => {
+                linhas.forEach((tr) => {
                     const input = tr.querySelector('.valor-parcela');
-
-                    if (idx === indexEditado) {
-                        input.value = `R$ ${valorEditado.toFixed(2).replace('.', ',')}`;
-                    } else {
+                    if (input.getAttribute('data-editado') !== 'true') {
                         input.value = `R$ ${valorParcelaRestante.toFixed(2).replace('.', ',')}`;
                     }
                 });
 
-                // Atualiza valores visuais
-                document.getElementById('valorParcela').innerText = '-';
+                // Atualiza valor total exibido
                 document.getElementById('valorTotalVenda').innerText = valorTotal.toFixed(2).replace('.', ',');
             }
+
+
 
 
             function adicionarProduto() {
@@ -352,27 +370,27 @@
                 produtosAdicionados.forEach(p => {
                     const subtotal = p.preco * p.quantidade;
                     tbody.innerHTML += `
-            <tr>
-                <td>${p.nome}</td>
-                <td>
-                    <input 
-                        type="text" 
-                        class="form-control form-control-sm preco-unitario" 
-                        value="${p.preco.toFixed(2).replace('.', ',')}" 
-                        data-id="${p.id}">
-                </td>                        
-                <td>
-                    <input type="number" min="1" value="${p.quantidade}" style="width:60px"
-                    onchange="alterarQuantidade('${p.id}', this.value)">
-                </td>
-                <td>R$ ${subtotal.toFixed(2).replace('.', ',')}</td>
-                <td style="text-align:center; vertical-align: middle;">
-                    <button class="btn btn-danger btn-sm px-3 py-1" onclick="removerProduto('${p.id}')">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
+                    <tr>
+                        <td>${p.nome}</td>
+                        <td>
+                            <input 
+                                type="text" 
+                                class="form-control form-control-sm preco-unitario" 
+                                value="${p.preco.toFixed(2).replace('.', ',')}" 
+                                data-id="${p.id}">
+                        </td>                        
+                        <td>
+                            <input type="number" min="1" value="${p.quantidade}" style="width:60px"
+                            onchange="alterarQuantidade('${p.id}', this.value)">
+                        </td>
+                        <td>R$ ${subtotal.toFixed(2).replace('.', ',')}</td>
+                        <td style="text-align:center; vertical-align: middle;">
+                            <button class="btn btn-danger btn-sm px-3 py-1" onclick="removerProduto('${p.id}')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
                 });
 
                 // Atualiza os eventos blur após recriar inputs
@@ -429,7 +447,6 @@
                 btnPagamento.disabled = produtosAdicionados.length === 0;
             }
 
-            // Remove os event listeners antigos e adiciona assim:
 
             document.addEventListener('input', (e) => {
                 if (e.target.classList.contains('preco-unitario')) {
@@ -455,14 +472,13 @@
                 }
             });
 
-            // Adiciona evento blur para salvar preço e atualizar a tabela (recriar inputs com formatação correta)
             function adicionarEventoBlurPreco() {
                 document.querySelectorAll('.preco-unitario').forEach(input => {
                     input.addEventListener('blur', function() {
                         const id = this.dataset.id;
                         alterarPreco(id, this.value);
                         atualizarTabela
-                            (); // Aqui sim recria os inputs para atualizar formatação e valores
+                            ();
                     });
                 });
             }
