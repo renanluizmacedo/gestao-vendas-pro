@@ -338,23 +338,20 @@
 
                 const valorTotal = obterValorTotalVenda();
 
-                // Índice da parcela editada
                 const indexEditado = inputs.indexOf(inputEditado);
 
-                // Soma das parcelas até a editada (inclusive)
                 let somaAnteriorEAAtual = 0;
                 for (let i = 0; i <= indexEditado; i++) {
                     const valor = parseValorMonetario(inputs[i].value);
                     somaAnteriorEAAtual += valor;
                 }
 
-                // Calcular restante para redistribuir nas parcelas seguintes
                 const restante = valorTotal - somaAnteriorEAAtual;
 
                 if (restante < 0) {
                     alert('A soma das parcelas excede o valor total.');
                     inputEditado.removeAttribute('data-editado');
-                    atualizarValorParcela(); // Reseta valores, se necessário
+                    atualizarValorParcela();
                     return;
                 }
 
@@ -372,15 +369,24 @@
                         valorFinal += diferenca;
                     }
                     input.value = valorFinal.toFixed(2);
-                    input.removeAttribute('data-editado'); // Limpa flag de edição anterior
+                    input.removeAttribute('data-editado');
                 });
+
+                // 🔁 Resetar todos os inputs para editáveis antes
+                inputs.forEach(input => {
+                    input.removeAttribute('readonly');
+                    input.classList.remove('bg-light');
+                });
+
+                // ❌ Desativar somente o último input
+                const ultimoInput = inputs[inputs.length - 1];
+                ultimoInput.setAttribute('readonly', true);
+                ultimoInput.classList.add('bg-light');
 
                 document.getElementById('valorTotalVenda').innerText = valorTotal.toFixed(2).replace('.', ',');
 
-                configurarListenersDeParcelas(); // Caso queira manter escuta por input
+                configurarListenersDeParcelas();
             }
-
-
 
             function adicionarProduto() {
                 const select = document.getElementById('selectProduto');
@@ -524,10 +530,6 @@
                     });
                 });
             }
-
-
-
-
             window.adicionarProduto = adicionarProduto;
             window.alterarQuantidade = alterarQuantidade;
             window.removerProduto = removerProduto;
