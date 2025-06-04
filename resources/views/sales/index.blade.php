@@ -154,6 +154,7 @@
             const parcelasInput = document.getElementById('parcelas');
             const modalParcelamento = document.getElementById('parcelamentoModal');
             const tabelaVencimentos = document.querySelector('#tabelaVencimentos tbody');
+            atualizarTabela();
 
             selectCliente.addEventListener('change', () => {
                 const selected = selectCliente.selectedOptions[0];
@@ -192,22 +193,24 @@
 
             function adicionarLinhaParcela(data = '', valor = 0) {
                 const numeroParcela = tabelaVencimentos.children.length + 1;
+                console.log('Valor para o input:', valor); // Verifique aqui
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                <td>${numeroParcela} x</td>
-                <td><input type="date" class="form-control form-control-sm data-vencimento" value="${data}"></td>
-                <td>
-                    <input type="text" class="form-control form-control-sm valor-parcela" value="R$ ${valor.toFixed(2).replace('.', ',')}">
-                </td>
-                <td style="text-align:center;">
-                    <button type="button" class="btn btn-danger btn-sm btn-remover-parcela">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </td>
-            `;
+        <td>${numeroParcela} x</td>
+        <td><input type="date" class="form-control form-control-sm data-vencimento" value="${data}"></td>
+        <td>
+            <input type="number" step="0.01" class="form-control form-control-sm valor-parcela" value="${valor.toFixed(2)}">
+        </td>
+        <td style="text-align:center;">
+            <button type="button" class="btn btn-danger btn-sm btn-remover-parcela">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </td>
+    `;
                 tabelaVencimentos.appendChild(tr);
             }
+
 
             function inicializarParcelas() {
                 const parcelasCount = parseInt(parcelasInput.value) || 1;
@@ -271,7 +274,7 @@
                 linhas.forEach((tr) => {
                     const input = tr.querySelector('.valor-parcela');
                     if (input && !input.disabled) {
-                        input.value = `R$ ${valorParcela.toFixed(2).replace('.', ',')}`;
+                        input.value = valorParcela.toFixed(2); // valor numérico com ponto decimal
                     }
                 });
             }
@@ -372,16 +375,12 @@
         `;
                 });
 
-                // Adiciona evento aos inputs de preço unitário
-                document.querySelectorAll('.preco-unitario').forEach(input => {
-                    input.addEventListener('blur', function() {
-                        const id = this.dataset.id;
-                        alterarPreco(id, this.value);
-                    });
-                });
+                // Atualiza os eventos blur após recriar inputs
+                adicionarEventoBlurPreco();
 
                 atualizarResumo();
             }
+
 
             function alterarPreco(id, valorInput) {
                 const precoLimpo = valorInput.replace(/[^\d,]/g, '').replace(',', '.');
@@ -430,33 +429,44 @@
                 btnPagamento.disabled = produtosAdicionados.length === 0;
             }
 
+            // Remove os event listeners antigos e adiciona assim:
+
             document.addEventListener('input', (e) => {
-                // Verifica se o campo alterado é de preço unitário
                 if (e.target.classList.contains('preco-unitario')) {
                     const id = e.target.dataset.id;
-
-                    // Extrai valor numérico (ignora R$, pontos, etc.)
                     const raw = e.target.value.replace(/[^\d,]/g, '').replace(',', '.');
                     const preco = parseFloat(raw);
 
                     const prod = produtosAdicionados.find(p => p.id == id);
                     if (!prod) return;
 
-                    // Atualiza o preço se for válido
                     if (!isNaN(preco) && preco > 0) {
                         prod.preco = preco;
 
-                        // Atualiza o subtotal da linha
+                        // Atualiza subtotal na linha sem recriar inputs
                         const tr = e.target.closest('tr');
                         const subtotalCell = tr.querySelector('td:nth-child(4)');
                         const subtotal = prod.preco * prod.quantidade;
                         subtotalCell.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
 
-                        // Atualiza o resumo geral, sem alterar os inputs de preço
+                        // Atualiza o resumo, mas sem alterar inputs (sem chamar atualizarTabela)
                         atualizarResumo(false);
                     }
                 }
             });
+
+            // Adiciona evento blur para salvar preço e atualizar a tabela (recriar inputs com formatação correta)
+            function adicionarEventoBlurPreco() {
+                document.querySelectorAll('.preco-unitario').forEach(input => {
+                    input.addEventListener('blur', function() {
+                        const id = this.dataset.id;
+                        alterarPreco(id, this.value);
+                        atualizarTabela
+                            (); // Aqui sim recria os inputs para atualizar formatação e valores
+                    });
+                });
+            }
+
 
 
 
