@@ -315,8 +315,17 @@ return [
         ['header' => 'Menu'],
         [
             'text' => 'Vendas',
-            'url'  => '/sales',
             'icon' => 'fas fa-fw fa-shopping-cart',
+            'submenu' => [
+                [
+                    'text' => 'Listar Vendas',
+                    'url'  => '/sales',
+                ],
+                [
+                    'text' => 'Nova Venda',
+                    'url'  => '/sales/create',
+                ],
+            ],
         ],
         [
             'text' => 'Produtos',
@@ -333,6 +342,7 @@ return [
             'url' => '/categories',
             'icon' => 'fas fa-fw fa-tags',
         ],
+
 
 
     ],

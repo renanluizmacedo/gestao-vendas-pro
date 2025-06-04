@@ -5,25 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class SaleItem extends Model
+class SaleInstallment extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'sale_id',
-        'product_id',
-        'quantity',
-        'unit_price',
-        'subtotal',
+        'installment_number',
+        'due_date',
+        'amount',
     ];
 
     public function sale()
     {
         return $this->belongsTo(Sale::class);
-    }
-
-    public function product()
-    {
-        return $this->belongsTo(Product::class);
     }
 }

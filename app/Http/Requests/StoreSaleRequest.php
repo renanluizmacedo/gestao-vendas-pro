@@ -22,7 +22,19 @@ class StoreSaleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'customer_id' => 'required|exists:customers,id',
+            'sale_date' => 'required|date',
+            'total' => 'required|numeric|min:0',
+            'installments' => 'required|integer|min:1',
+
+            'produtos' => 'required|array|min:1',
+            'produtos.*.product_id' => 'required|exists:products,id',
+            'produtos.*.quantidade' => 'required|integer|min:1',
+            'produtos.*.preco_unitario' => 'required|numeric|min:0',
+
+            'parcelas' => 'required|array|min:1',
+            'parcelas.*.data_vencimento' => 'required|date',
+            'parcelas.*.valor' => 'required|numeric|min:0',
         ];
     }
 }
