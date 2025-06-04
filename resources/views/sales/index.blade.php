@@ -189,6 +189,7 @@
                 }
             });
 
+
             function adicionarLinhaParcela(data = '', valor = 0) {
                 const numeroParcela = tabelaVencimentos.children.length + 1;
 
@@ -280,18 +281,24 @@
                 const indexEditado = linhas.findIndex(tr => tr.contains(inputEditado));
 
                 let valorTotal = obterValorTotalVenda();
-                let valorEditado = parseFloat(inputEditado.value.replace('R$ ', '').replace(/\./g, '').replace(',',
-                    '.')) || 0;
+                let valorEditado = parseFloat(inputEditado.value.replace(/[R$\s\.]/g, '').replace(',', '.')) || 0;
 
-                let qtdRestante = linhas.length - 1;
+                if (valorEditado > valorTotal) {
+                    alert('O valor da parcela não pode ser maior que o valor total da venda.');
+                    // Resetar para o valor proporcional correto
+                    atualizarValorParcela();
+                    return;
+                }
+
+                // Quantidade de parcelas restantes para dividir o restante
+                const qtdRestante = linhas.length - 1;
                 if (qtdRestante <= 0) return;
 
-                let valorRestante = valorTotal - valorEditado;
-                let valorParcelaRestante = valorRestante / qtdRestante;
+                const valorRestante = valorTotal - valorEditado;
+                const valorParcelaRestante = valorRestante / qtdRestante;
 
                 linhas.forEach((tr, idx) => {
                     const input = tr.querySelector('.valor-parcela');
-
                     if (idx === indexEditado) {
                         input.value = `R$ ${valorEditado.toFixed(2).replace('.', ',')}`;
                     } else {
@@ -302,6 +309,7 @@
                 document.getElementById('valorParcela').innerText = '-';
                 document.getElementById('valorTotalVenda').innerText = valorTotal.toFixed(2).replace('.', ',');
             }
+
 
             function adicionarProduto() {
                 const select = document.getElementById('selectProduto');
@@ -333,25 +341,60 @@
                 produtosAdicionados.forEach(p => {
                     const subtotal = p.preco * p.quantidade;
                     tbody.innerHTML += `
-                    <tr>
-                        <td>${p.nome}</td>
-                        <td>R$ ${p.preco.toFixed(2).replace('.', ',')}</td>
-                        <td>
-                            <input type="number" min="1" value="${p.quantidade}" style="width:60px"
-                            onchange="alterarQuantidade('${p.id}', this.value)">
-                        </td>
-                        <td>R$ ${subtotal.toFixed(2).replace('.', ',')}</td>
-                        <td style="text-align:center; vertical-align: middle;">
-                            <button class="btn btn-danger btn-sm px-3 py-1" onclick="removerProduto('${p.id}')">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
+            <tr>
+                <td>${p.nome}</td>
+                <td>
+                    <input 
+                        type="text" 
+                        class="form-control form-control-sm preco-unitario" 
+                        value="${p.preco.toFixed(2).replace('.', ',')}" 
+                        data-id="${p.id}">
+                </td>                        
+                <td>
+                    <input type="number" min="1" value="${p.quantidade}" style="width:60px"
+                    onchange="alterarQuantidade('${p.id}', this.value)">
+                </td>
+                <td>R$ ${subtotal.toFixed(2).replace('.', ',')}</td>
+                <td style="text-align:center; vertical-align: middle;">
+                    <button class="btn btn-danger btn-sm px-3 py-1" onclick="removerProduto('${p.id}')">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+                });
+
+                // Adiciona evento aos inputs de preço unitário
+                document.querySelectorAll('.preco-unitario').forEach(input => {
+                    input.addEventListener('blur', function() {
+                        const id = this.dataset.id;
+                        alterarPreco(id, this.value);
+                    });
                 });
 
                 atualizarResumo();
             }
+
+
+            function alterarPreco(id, valorInput) {
+                const precoLimpo = valorInput.replace(/[^\d,]/g, '').replace(',', '.');
+                let preco = parseFloat(precoLimpo);
+
+                if (isNaN(preco) || preco <= 0) {
+                    preco = 0.01;
+                }
+
+                const prod = produtosAdicionados.find(p => p.id == id);
+                if (!prod) return;
+
+                prod.preco = preco;
+
+                // Atualiza os subtotais e total da venda
+                atualizarTabela();
+            }
+
+
+
 
             function alterarQuantidade(id, valor) {
                 const qtd = parseInt(valor);
@@ -367,19 +410,53 @@
                 produtosAdicionados = produtosAdicionados.filter(p => p.id != id);
                 atualizarTabela();
             }
-
-            function atualizarResumo() {
+            // Atualiza o resumo geral (total de produtos e valor total da venda)
+            function atualizarResumo(atualizarInputs = true) {
                 const totalProdutos = produtosAdicionados.reduce((acc, p) => acc + p.quantidade, 0);
                 const valorTotal = produtosAdicionados.reduce((acc, p) => acc + p.preco * p.quantidade, 0);
 
+                // Atualiza os elementos do resumo
                 document.getElementById('totalProdutos').innerText = totalProdutos;
                 document.getElementById('valorTotal').innerText = valorTotal.toFixed(2).replace('.', ',');
 
+                // Atualiza o valor das parcelas, se aplicável
                 atualizarValorParcela();
 
+                // Habilita ou desabilita o botão de pagamento
                 const btnPagamento = document.getElementById('btnPagamento');
                 btnPagamento.disabled = produtosAdicionados.length === 0;
             }
+
+            // Evento para atualizar o preço unitário diretamente na tabela
+            document.addEventListener('input', (e) => {
+                // Verifica se o campo alterado é de preço unitário
+                if (e.target.classList.contains('preco-unitario')) {
+                    const id = e.target.dataset.id;
+
+                    // Extrai valor numérico (ignora R$, pontos, etc.)
+                    const raw = e.target.value.replace(/[^\d,]/g, '').replace(',', '.');
+                    const preco = parseFloat(raw);
+
+                    const prod = produtosAdicionados.find(p => p.id == id);
+                    if (!prod) return;
+
+                    // Atualiza o preço se for válido
+                    if (!isNaN(preco) && preco > 0) {
+                        prod.preco = preco;
+
+                        // Atualiza o subtotal da linha
+                        const tr = e.target.closest('tr');
+                        const subtotalCell = tr.querySelector('td:nth-child(4)');
+                        const subtotal = prod.preco * prod.quantidade;
+                        subtotalCell.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+
+                        // Atualiza o resumo geral, sem alterar os inputs de preço
+                        atualizarResumo(false);
+                    }
+                }
+            });
+
+
 
             window.adicionarProduto = adicionarProduto;
             window.alterarQuantidade = alterarQuantidade;
@@ -387,7 +464,5 @@
         });
     </script>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-        integrity="sha512-papbE4dUrbxvBPtqyb7+6qTce4HGXDq0TxEexzH8XvdODZLllfJcsjkz2/fnUz1FKOQYFDfZ07jw2u2vbuqKkg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
 @stop
