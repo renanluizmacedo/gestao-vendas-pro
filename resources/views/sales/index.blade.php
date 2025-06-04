@@ -65,20 +65,11 @@
                     </div>
                 </div>
 
-                {{-- Parcelamento --}}
-                <div class="card border-secondary">
-                    <div class="card-header bg-secondary text-white">Parcelamento</div>
-                    <div class="card-body">
-                        <label for="parcelas" class="form-label">Número de Parcelas</label>
-                        <input type="number" id="parcelas" class="form-control form-control-sm mb-2" min="1"
-                            value="1">
-
-                        <label for="dataVencimento" class="form-label">1º Vencimento</label>
-                        <input type="date" id="dataVencimento" class="form-control form-control-sm mb-2">
-
-                        <p><strong>Valor da Parcela:</strong> R$ <span id="valorParcela">0,00</span></p>
-                    </div>
-                </div>
+                {{-- Botão para abrir modal de parcelamento --}}
+                <button type="button" class="btn btn-secondary mt-2" data-bs-toggle="modal"
+                    data-bs-target="#parcelamentoModal">
+                    Pagamento
+                </button>
             </div>
 
             {{-- Coluna direita --}}
@@ -104,9 +95,56 @@
         </div>
 
     </div>
+
+    {{-- Modal Parcelamento --}}
+    {{-- Modal Parcelamento --}}
+    <div class="modal fade" id="parcelamentoModal" tabindex="-1" aria-labelledby="parcelamentoModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title" id="parcelamentoModalLabel">Configurar Parcelamento</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formParcelamento">
+                        <div class="mb-3">
+                            <label for="parcelas" class="form-label">Número de Parcelas</label>
+                            <input type="number" id="parcelas" class="form-control form-control-sm" min="1"
+                                value="1">
+                        </div>
+
+                        <p><strong>Valor Total da Venda:</strong> R$ <span id="valorTotalVenda">0,00</span></p>
+                        <p><strong>Valor da Parcela:</strong> R$ <span id="valorParcela">0,00</span></p>
+
+                        <p><strong>Parcelas:</strong></p>
+                        <table class="table table-bordered" id="tabelaVencimentos" style="width:100%; max-width: 400px;">
+                            <thead>
+                                <tr>
+                                    <th>Parcela</th>
+                                    <th>Data de Vencimento</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <button type="button" class="btn btn-primary btn-sm" id="btnAdicionarParcela">Adicionar
+                            Parcela</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @stop
 
 @section('js')
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         let produtosAdicionados = [];
 
@@ -114,7 +152,8 @@
             const selectCliente = document.getElementById('selectCliente');
             const selectProduto = document.getElementById('selectProduto');
             const btnAdicionar = document.getElementById('btnAdicionarProduto');
-            const parcelas = document.getElementById('parcelas');
+            const parcelasInput = document.getElementById('parcelas');
+            const modalParcelamento = document.getElementById('parcelamentoModal');
 
             selectCliente.addEventListener('change', () => {
                 const selected = selectCliente.selectedOptions[0];
@@ -126,91 +165,170 @@
                 btnAdicionar.disabled = !selectProduto.value;
             });
 
-            parcelas.addEventListener('input', atualizarValorParcela);
-        });
+            parcelasInput.addEventListener('input', () => {
+                inicializarParcelas();
+                atualizarValorParcela();
+            });
 
-        function adicionarProduto() {
-            const select = document.getElementById('selectProduto');
-            const selected = select.selectedOptions[0];
-            if (!selected) return;
 
-            const id = selected.value;
-            if (produtosAdicionados.find(p => p.id == id)) {
-                alert('Produto já adicionado');
-                return;
+
+            modalParcelamento.addEventListener('shown.bs.modal', () => {
+                inicializarParcelas();
+                atualizarValorParcela();
+            });
+
+            const btnAdicionarParcela = document.getElementById('btnAdicionarParcela');
+            const tabelaVencimentos = document.querySelector('#tabelaVencimentos tbody');
+
+            btnAdicionarParcela.addEventListener('click', () => {
+                adicionarLinhaParcela();
+            });
+
+            tabelaVencimentos.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-remover-parcela')) {
+                    const tr = e.target.closest('tr');
+                    tr.remove();
+                    atualizarNumerosParcelas();
+                    atualizarValorParcela();
+                }
+            });
+
+            tabelaVencimentos.addEventListener('change', (e) => {
+                if (e.target.classList.contains('data-vencimento')) {
+                    // Pode adicionar validação da data aqui se quiser
+                }
+            });
+
+            function adicionarLinhaParcela(data = '') {
+                const numeroParcela = tabelaVencimentos.children.length + 1;
+
+                const tr = document.createElement('tr');
+
+                tr.innerHTML = `
+                    <td>${numeroParcela}</td>
+                    <td><input type="date" class="form-control form-control-sm data-vencimento" value="${data}"></td>
+                    <td style="text-align:center;">
+                        <button type="button" class="btn btn-danger btn-sm btn-remover-parcela">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                `;
+
+                tabelaVencimentos.appendChild(tr);
+
+                atualizarValorParcela();
             }
 
-            produtosAdicionados.push({
-                id,
-                nome: selected.dataset.nome,
-                preco: parseFloat(selected.dataset.preco),
-                quantidade: 1
-            });
+            function atualizarNumerosParcelas() {
+                Array.from(tabelaVencimentos.children).forEach((tr, index) => {
+                    tr.children[0].textContent = index + 1;
+                });
+            }
 
-            atualizarTabela();
-            select.selectedIndex = 0;
-            document.getElementById('btnAdicionarProduto').disabled = true;
-        }
+            function adicionarProduto() {
+                const select = document.getElementById('selectProduto');
+                const selected = select.selectedOptions[0];
+                if (!selected) return;
 
-        function atualizarTabela() {
-            const tbody = document.querySelector('#tabelaProdutos tbody');
-            tbody.innerHTML = '';
+                const id = selected.value;
+                if (produtosAdicionados.find(p => p.id == id)) {
+                    alert('Produto já adicionado');
+                    return;
+                }
 
-            produtosAdicionados.forEach(p => {
-                const subtotal = p.preco * p.quantidade;
-                tbody.innerHTML += `
-      <tr>
-        <td>${p.nome}</td>
-        <td>R$ ${p.preco.toFixed(2).replace('.', ',')}</td>
-        <td>
-          <input type="number" min="1" value="${p.quantidade}" style="width:60px"
-            onchange="alterarQuantidade('${p.id}', this.value)">
-        </td>
-        <td>R$ ${subtotal.toFixed(2).replace('.', ',')}</td>
-        <td style="text-align:center; vertical-align: middle;">
-          <button class="btn btn-danger btn-sm px-3 py-1" onclick="removerProduto('${p.id}')">
-            <i class="fas fa-trash-alt"></i>
-          </button>
-        </td>
-      </tr>
-    `;
-            });
+                produtosAdicionados.push({
+                    id,
+                    nome: selected.dataset.nome,
+                    preco: parseFloat(selected.dataset.preco),
+                    quantidade: 1
+                });
 
-            atualizarResumo();
-        }
+                atualizarTabela();
+                select.selectedIndex = 0;
+                btnAdicionar.disabled = true;
+            }
 
-        function alterarQuantidade(id, valor) {
-            const qtd = parseInt(valor);
-            if (isNaN(qtd) || qtd < 1) return;
+            function atualizarTabela() {
+                const tbody = document.querySelector('#tabelaProdutos tbody');
+                tbody.innerHTML = '';
 
-            const prod = produtosAdicionados.find(p => p.id == id);
-            if (!prod) return;
-            prod.quantidade = qtd;
-            atualizarTabela();
-        }
+                produtosAdicionados.forEach(p => {
+                    const subtotal = p.preco * p.quantidade;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${p.nome}</td>
+                            <td>R$ ${p.preco.toFixed(2).replace('.', ',')}</td>
+                            <td>
+                                <input type="number" min="1" value="${p.quantidade}" style="width:60px"
+                                onchange="alterarQuantidade('${p.id}', this.value)">
+                            </td>
+                            <td>R$ ${subtotal.toFixed(2).replace('.', ',')}</td>
+                            <td style="text-align:center; vertical-align: middle;">
+                                <button class="btn btn-danger btn-sm px-3 py-1" onclick="removerProduto('${p.id}')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
 
-        function removerProduto(id) {
-            produtosAdicionados = produtosAdicionados.filter(p => p.id != id);
-            atualizarTabela();
-        }
+                atualizarResumo();
+            }
 
-        function atualizarResumo() {
-            const totalProdutos = produtosAdicionados.reduce((acc, p) => acc + p.quantidade, 0);
-            const valorTotal = produtosAdicionados.reduce((acc, p) => acc + p.preco * p.quantidade, 0);
+            function alterarQuantidade(id, valor) {
+                const qtd = parseInt(valor);
+                if (isNaN(qtd) || qtd < 1) return;
 
-            document.getElementById('totalProdutos').innerText = totalProdutos;
-            document.getElementById('valorTotal').innerText = valorTotal.toFixed(2).replace('.', ',');
+                const prod = produtosAdicionados.find(p => p.id == id);
+                if (!prod) return;
+                prod.quantidade = qtd;
+                atualizarTabela();
+            }
 
-            atualizarValorParcela();
-        }
+            function removerProduto(id) {
+                produtosAdicionados = produtosAdicionados.filter(p => p.id != id);
+                atualizarTabela();
+            }
 
-        function atualizarValorParcela() {
-            const valorTotalText = document.getElementById('valorTotal').innerText;
-            const valorTotal = parseFloat(valorTotalText.replace('.', '').replace(',', '.')) || 0;
-            const parcelas = parseInt(document.getElementById('parcelas').value) || 1;
+            function atualizarResumo() {
+                const totalProdutos = produtosAdicionados.reduce((acc, p) => acc + p.quantidade, 0);
+                const valorTotal = produtosAdicionados.reduce((acc, p) => acc + p.preco * p.quantidade, 0);
 
-            let valorParcela = parcelas > 0 ? valorTotal / parcelas : 0;
-            document.getElementById('valorParcela').innerText = valorParcela.toFixed(2).replace('.', ',');
-        }
+                document.getElementById('totalProdutos').innerText = totalProdutos;
+                document.getElementById('valorTotal').innerText = valorTotal.toFixed(2).replace('.', ',');
+
+                atualizarValorParcela();
+            }
+
+            function atualizarValorParcela() {
+                const valorTotalText = document.getElementById('valorTotal').innerText;
+                const valorTotal = parseFloat(valorTotalText.replace(/\./g, '').replace(',', '.')) || 0;
+
+                const totalParcelas = tabelaVencimentos.children.length || 1;
+                const valorParcela = valorTotal / totalParcelas;
+
+                document.getElementById('valorParcela').innerText = valorParcela.toFixed(2).replace('.', ',');
+                document.getElementById('valorTotalVenda').innerText = valorTotal.toFixed(2).replace('.', ',');
+            }
+
+            function inicializarParcelas() {
+                tabelaVencimentos.innerHTML = '';
+                const parcelasCount = parseInt(parcelasInput.value) || 1;
+
+                for (let i = 0; i < parcelasCount; i++) {
+                    adicionarLinhaParcela('');
+                }
+            }
+
+
+            window.adicionarProduto = adicionarProduto;
+            window.alterarQuantidade = alterarQuantidade;
+            window.removerProduto = removerProduto;
+        });
     </script>
+
+    {{-- Ícones FontAwesome para os botões de lixeira --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha512-papbE4dUrbxvBPtqyb7+6qTce4HGXDq0TxEexzH8XvdODZLllfJcsjkz2/fnUz1FKOQYFDfZ07jw2u2vbuqKkg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 @stop
