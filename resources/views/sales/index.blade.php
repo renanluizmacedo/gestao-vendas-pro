@@ -466,9 +466,13 @@
                 document.querySelectorAll('.quantidade-produto').forEach(input => {
                     input.addEventListener('input', function() {
                         const id = this.dataset.id;
-                        alterarQuantidade(id, this.value);
+                        const valor = this.value;
+
+                        // Só atualiza os dados internos e subtotal/resumo, sem mexer no valor do input
+                        alterarQuantidade(id, valor);
                     });
                 });
+
             }
 
             function alterarPreco(id, valor) {
@@ -484,13 +488,25 @@
 
             function alterarQuantidade(id, valor) {
                 const qtd = parseInt(valor);
-                if (isNaN(qtd) || qtd < 1) return;
+                if (isNaN(qtd) || qtd < 1) return; // Ignora valores inválidos
 
                 const prod = produtosAdicionados.find(p => p.id == id);
                 if (!prod) return;
 
                 prod.quantidade = qtd;
-                atualizarTabela(); // Recalcula e exibe subtotal e totais
+
+                // Atualiza o subtotal da linha sem recriar tabela
+                const inputQuantidade = document.querySelector(`.quantidade-produto[data-id="${id}"]`);
+                if (!inputQuantidade) return;
+
+                const tr = inputQuantidade.closest('tr');
+                const subtotalCell = tr.querySelector('td:nth-child(4)');
+                const subtotal = prod.preco * prod.quantidade;
+
+                subtotalCell.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+
+                // Atualiza resumo (total de itens e valor total)
+                atualizarResumo(false);
             }
 
             function removerProduto(id) {
