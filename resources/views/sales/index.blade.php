@@ -65,11 +65,11 @@
                     </div>
                 </div>
 
-                {{-- Botão para abrir modal de parcelamento --}}
-                <button type="button" class="btn btn-secondary mt-2" data-bs-toggle="modal"
-                    data-bs-target="#parcelamentoModal">
+                <button type="button" id="btnPagamento" class="btn btn-secondary mt-2" data-bs-toggle="modal"
+                    data-bs-target="#parcelamentoModal" disabled>
                     Pagamento
                 </button>
+
             </div>
 
             {{-- Coluna direita --}}
@@ -119,7 +119,7 @@
                         <p><strong>Valor da Parcela:</strong> R$ <span id="valorParcela">0,00</span></p>
 
                         <p><strong>Parcelas:</strong></p>
-                        <table class="table table-bordered" id="tabelaVencimentos" style="width:100%; max-width: 400px;">
+                        <table class="table table-bordered w-100" id="tabelaVencimentos">
                             <thead>
                                 <tr>
                                     <th>Parcela</th>
@@ -129,8 +129,7 @@
                             </thead>
                             <tbody></tbody>
                         </table>
-                        <button type="button" class="btn btn-primary btn-sm" id="btnAdicionarParcela">Adicionar
-                            Parcela</button>
+
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -177,12 +176,9 @@
                 atualizarValorParcela();
             });
 
-            const btnAdicionarParcela = document.getElementById('btnAdicionarParcela');
             const tabelaVencimentos = document.querySelector('#tabelaVencimentos tbody');
 
-            btnAdicionarParcela.addEventListener('click', () => {
-                adicionarLinhaParcela();
-            });
+
 
             tabelaVencimentos.addEventListener('click', (e) => {
                 if (e.target.closest('.btn-remover-parcela')) {
@@ -298,6 +294,10 @@
                 document.getElementById('valorTotal').innerText = valorTotal.toFixed(2).replace('.', ',');
 
                 atualizarValorParcela();
+
+                // Bloquear ou desbloquear botão de pagamento
+                const btnPagamento = document.getElementById('btnPagamento');
+                btnPagamento.disabled = produtosAdicionados.length === 0;
             }
 
             function atualizarValorParcela() {
