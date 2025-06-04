@@ -3,10 +3,12 @@
 @section('title', 'Nova Venda')
 
 @section('content_header')
+
     <h1 class="font-weight-bold">Nova Venda</h1>
 @stop
 
 @section('content')
+
     <div class="container-fluid">
 
         {{-- Seleções no topo --}}
@@ -159,7 +161,10 @@
                     </form>
                 </div>
                 <div class="modal-footer">
+
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" id="btnSalvarVenda">Salvar Venda</button>
+
                 </div>
             </div>
         </div>
@@ -588,6 +593,90 @@
             window.adicionarProduto = adicionarProduto;
             window.alterarQuantidade = alterarQuantidade;
             window.removerProduto = removerProduto;
+        });
+        document.getElementById('btnSalvarVenda').addEventListener('click', async () => {
+            const selectCliente = document.getElementById('selectCliente');
+            const clienteId = selectCliente.value;
+
+            if (!clienteId) {
+                alert('Selecione um cliente');
+                return;
+            }
+
+            if (produtosAdicionados.length === 0) {
+                alert('Adicione ao menos um produto');
+                return;
+            }
+
+            const produtos = produtosAdicionados.map(p => ({
+                product_id: p.id,
+                preco_unitario: p.preco,
+                quantidade: p.quantidade
+            }));
+
+            const parcelas = [];
+            document.querySelectorAll('#tabelaVencimentos tbody tr').forEach(tr => {
+                const dataVenc = tr.querySelector('.data-vencimento').value;
+                const valorParc = parseFloat(tr.querySelector('.valor-parcela').value.replace(',',
+                    '.'));
+                parcelas.push({
+                    data_vencimento: dataVenc,
+                    valor: valorParc
+                });
+            });
+
+            const valorTotalText = document.getElementById('valorTotal').innerText;
+            const total = parseFloat(valorTotalText.replace('.', '').replace(',', '.')) || 0;
+
+            const numeroParcelas = parcelas.length;
+
+            const dadosVenda = {
+                customer_id: clienteId,
+                produtos,
+                total,
+                parcelas,
+                installments: numeroParcelas,
+                sale_date: new Date().toISOString().slice(0, 10) // yyyy-mm-dd
+            };
+
+            try {
+                const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const response = await fetch('{{ route('sales.store') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token
+                    },
+                    body: JSON.stringify(dadosVenda)
+                });
+
+                // Defina aqui contentType, depois que response estiver disponível
+                const contentType = response.headers.get('content-type') || '';
+
+                if (!response.ok) {
+                    if (contentType.includes('application/json')) {
+                        const erro = await response.json();
+                        alert('Erro ao salvar venda: ' + (erro.message || response.statusText));
+                    } else {
+                        const text = await response.text();
+                        alert('Erro ao salvar venda: ' + text);
+                    }
+                    return;
+                }
+
+                if (contentType.includes('application/json')) {
+                    const result = await response.json();
+                    alert('Venda salva com sucesso!');
+                    window.location.reload();
+                } else {
+                    alert('Venda salva com sucesso!');
+                    window.location.reload();
+                }
+
+            } catch (err) {
+                alert('Erro ao salvar venda: ' + err.message);
+            }
+
         });
     </script>
 

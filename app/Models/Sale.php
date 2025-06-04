@@ -9,4 +9,9 @@ class Sale extends Model
 {
     /** @use HasFactory<\Database\Factories\SaleFactory> */
     use HasFactory;
+
+    public function items()
+    {
+        return $this->hasMany(SaleItem::class);
+    }
 }

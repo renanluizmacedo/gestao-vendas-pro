@@ -36,7 +36,7 @@ class SaleController extends Controller
      */
     public function store(StoreSaleRequest $request)
     {
-        //
+        return response()->json(['success' => true, 'message' => 'Venda salva com sucesso!']);
     }
 
     /**
