@@ -417,50 +417,68 @@
 
                 produtosAdicionados.forEach(p => {
                     const subtotal = p.preco * p.quantidade;
-                    tbody.innerHTML += `
-                    <tr>
-                        <td>${p.nome}</td>
-                        <td>
-                            <input 
-                                type="text" 
-                                class="form-control form-control-sm preco-unitario" 
-                                value="${p.preco.toFixed(2).replace('.', ',')}" 
-                                data-id="${p.id}">
-                        </td>                        
-                        <td>
-                            <input type="number" min="1" value="${p.quantidade}" style="width:60px"
-                            onchange="alterarQuantidade('${p.id}', this.value)">
-                        </td>
-                        <td>R$ ${subtotal.toFixed(2).replace('.', ',')}</td>
-                        <td style="text-align:center; vertical-align: middle;">
-                            <button class="btn btn-danger btn-sm px-3 py-1" onclick="removerProduto('${p.id}')">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
+                    const tr = document.createElement('tr');
+
+                    tr.innerHTML = `
+            <td>${p.nome}</td>
+            <td>
+                <input 
+                    type="text" 
+                    class="form-control form-control-sm preco-unitario" 
+                    value="${p.preco.toFixed(2).replace('.', ',')}" 
+                    data-id="${p.id}">
+            </td>
+            <td>
+                <input 
+                    type="number" 
+                    min="1" 
+                    value="${p.quantidade}" 
+                    style="width:60px" 
+                    data-id="${p.id}" 
+                    class="quantidade-produto">
+            </td>
+            <td>R$ ${subtotal.toFixed(2).replace('.', ',')}</td>
+            <td style="text-align:center; vertical-align: middle;">
+                <button class="btn btn-danger btn-sm px-3 py-1" onclick="removerProduto('${p.id}')">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        `;
+                    tbody.appendChild(tr);
                 });
 
-                // Atualiza os eventos blur após recriar inputs
-                adicionarEventoBlurPreco();
+                // Reatribuir eventos
+                adicionarEventosTabela();
 
                 atualizarResumo();
             }
 
+            function adicionarEventosTabela() {
+                // Evento para alterar preço ao sair do campo (blur)
+                document.querySelectorAll('.preco-unitario').forEach(input => {
+                    input.addEventListener('blur', function() {
+                        const id = this.dataset.id;
+                        alterarPreco(id, this.value);
+                    });
+                });
 
-            function alterarPreco(id, valorInput) {
-                const precoLimpo = valorInput.replace(/[^\d,]/g, '').replace(',', '.');
-                let preco = parseFloat(precoLimpo);
+                // Evento para alterar quantidade ao mudar valor
+                document.querySelectorAll('.quantidade-produto').forEach(input => {
+                    input.addEventListener('input', function() {
+                        const id = this.dataset.id;
+                        alterarQuantidade(id, this.value);
+                    });
+                });
+            }
 
-                if (isNaN(preco) || preco <= 0) {
-                    preco = 0.01;
-                }
+            function alterarPreco(id, valor) {
+                const preco = parseFloat(valor.replace(',', '.'));
+                if (isNaN(preco) || preco < 0) return;
 
                 const prod = produtosAdicionados.find(p => p.id == id);
                 if (!prod) return;
 
                 prod.preco = preco;
-
                 atualizarTabela();
             }
 
@@ -470,8 +488,9 @@
 
                 const prod = produtosAdicionados.find(p => p.id == id);
                 if (!prod) return;
+
                 prod.quantidade = qtd;
-                atualizarTabela();
+                atualizarTabela(); // Recalcula e exibe subtotal e totais
             }
 
             function removerProduto(id) {
