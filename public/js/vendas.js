@@ -501,10 +501,112 @@ document.addEventListener("DOMContentLoaded", () => {
     window.adicionarProduto = adicionarProduto;
     window.alterarQuantidade = alterarQuantidade;
     window.removerProduto = removerProduto;
-});
-document
-    .getElementById("btnSalvarVenda")
-    .addEventListener("click", async () => {
+    const btnSalvar = document.getElementById("btnSalvarVenda");
+    const btnAtualizar = document.getElementById("btnAtualizarVenda");
+
+    if (btnSalvar) {
+        btnSalvar.addEventListener("click", salvarVenda);
+    }
+
+    if (btnAtualizar) {
+        btnAtualizar.addEventListener("click", atualizarVenda);
+    }
+    async function salvarVenda() {
+        console.log("Iniciando processo de salvar venda...");
+
+        const selectCliente = document.getElementById("selectCliente");
+        const clienteId = selectCliente.value;
+        console.log("Cliente selecionado:", clienteId);
+
+        if (!clienteId) {
+            alert("Selecione um cliente");
+            return;
+        }
+
+        if (produtosAdicionados.length === 0) {
+            alert("Adicione ao menos um produto");
+            return;
+        }
+
+        const produtos = produtosAdicionados.map((p) => ({
+            product_id: p.id,
+            preco_unitario: p.preco,
+            quantidade: p.quantidade,
+        }));
+        console.log("Produtos adicionados:", produtos);
+
+        const parcelas = Array.from(
+            document.querySelectorAll("#tabelaVencimentos tbody tr")
+        ).map((tr, i) => {
+            const data = tr.querySelector(".data-vencimento").value;
+            const valor = parseFloat(
+                tr.querySelector(".valor-parcela").value.replace(",", ".")
+            );
+            console.log(`Parcela ${i + 1}: Data: ${data}, Valor: ${valor}`);
+            return { data_vencimento: data, valor };
+        });
+
+        const valorTotalText = document.getElementById("valorTotal").innerText;
+        const total =
+            parseFloat(valorTotalText.replace(/\./g, "").replace(",", ".")) ||
+            0;
+        console.log("Valor total calculado:", total);
+
+        const dadosVenda = {
+            customer_id: clienteId,
+            produtos,
+            total,
+            parcelas,
+            installments: parcelas.length,
+            sale_date: new Date().toISOString().slice(0, 10),
+        };
+        console.log("Payload final da venda:", dadosVenda);
+
+        const storeUrl = window.LaravelRoutes.storeSale;
+        const token = window.LaravelRoutes.csrfToken;
+
+        console.log("Endpoint de envio:", storeUrl);
+
+        try {
+            const response = await fetch(storeUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": token,
+                },
+                body: JSON.stringify(dadosVenda),
+            });
+
+            const contentType = response.headers.get("content-type") || "";
+            console.log("Tipo de conteúdo retornado:", contentType);
+            console.log("Status da resposta:", response.status);
+
+            if (!response.ok) {
+                const mensagem = contentType.includes("application/json")
+                    ? (await response.json()).message
+                    : await response.text();
+
+                console.error("Erro do servidor:", mensagem);
+                alert("Erro ao salvar venda: " + mensagem);
+                return;
+            }
+
+            console.log("Venda salva com sucesso!");
+            alert("Venda salva com sucesso!");
+            window.location.reload();
+        } catch (err) {
+            console.error("Erro na requisição:", err);
+            alert("Erro ao salvar venda: " + err.message || err);
+        }
+    }
+
+    async function atualizarVenda() {
+        const idVenda = document.getElementById("idVendaHidden").value;
+        if (!idVenda) {
+            alert("ID da venda não encontrado.");
+            return;
+        }
+
         const selectCliente = document.getElementById("selectCliente");
         const clienteId = selectCliente.value;
 
@@ -524,187 +626,52 @@ document
             quantidade: p.quantidade,
         }));
 
-        const parcelas = [];
-        document
-            .querySelectorAll("#tabelaVencimentos tbody tr")
-            .forEach((tr) => {
-                const dataVenc = tr.querySelector(".data-vencimento").value;
-                const valorParc = parseFloat(
-                    tr.querySelector(".valor-parcela").value.replace(",", ".")
-                );
-                parcelas.push({
-                    data_vencimento: dataVenc,
-                    valor: valorParc,
-                });
-            });
+        const parcelas = Array.from(
+            document.querySelectorAll("#tabelaVencimentos tbody tr")
+        ).map((tr) => ({
+            data_vencimento: tr.querySelector(".data-vencimento").value,
+            valor: parseFloat(
+                tr.querySelector(".valor-parcela").value.replace(",", ".")
+            ),
+        }));
 
         const valorTotalText = document.getElementById("valorTotal").innerText;
         const total =
-            parseFloat(valorTotalText.replace(".", "").replace(",", ".")) || 0;
-
-        const numeroParcelas = parcelas.length;
+            parseFloat(valorTotalText.replace(/\./g, "").replace(",", ".")) ||
+            0;
 
         const dadosVenda = {
             customer_id: clienteId,
             produtos,
             total,
             parcelas,
-            installments: numeroParcelas,
-            sale_date: new Date().toISOString().slice(0, 10), // yyyy-mm-dd
+            installments: parcelas.length,
+            sale_date: new Date().toISOString().slice(0, 10),
         };
 
-        try {
-            const token = document
-                .querySelector('meta[name="csrf-token"]')
-                .getAttribute("content");
+        const token = document.querySelector('meta[name="csrf-token"]').content;
 
-            const url = "{{ route('sales.store') }}";
+        const url = `/sales/${idVenda}`;
+        const response = await fetch(url, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": token,
+            },
+            body: JSON.stringify(dadosVenda),
+        });
 
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": token,
-                },
-                body: JSON.stringify(dadosVenda),
-            });
-            // Defina aqui contentType, depois que response estiver disponível
-            const contentType = response.headers.get("content-type") || "";
+        const contentType = response.headers.get("content-type") || "";
 
-            if (!response.ok) {
-                if (contentType.includes("application/json")) {
-                    const erro = await response.json();
-
-                    alert(
-                        "Erro ao salvar venda: " +
-                            (erro.message || response.statusText)
-                    );
-                } else {
-                    const text = await response.text();
-
-                    alert("Erro ao salvar venda: " + text);
-                }
-                return;
-            }
-
-            if (contentType.includes("application/json")) {
-                const result = await response.json();
-                alert("Venda salva com sucesso!");
-                window.location.reload();
-            } else {
-                alert("Venda salva com sucesso!");
-                window.location.reload();
-            }
-        } catch (err) {
-            alert("Erro ao salvar venda: " + err);
+        if (!response.ok) {
+            const mensagem = contentType.includes("application/json")
+                ? (await response.json()).message
+                : await response.text();
+            alert("Erro ao atualizar venda: " + mensagem);
+            return;
         }
-    });
-document
-    .getElementById("btnAtualizarVenda")
-    .addEventListener("click", async () => {
-        try {
-            const idVenda = document.getElementById("idVendaHidden").value;
-            if (!idVenda) {
-                alert("ID da venda não encontrado.");
-                return;
-            }
 
-            const selectCliente = document.getElementById("selectCliente");
-            const clienteId = selectCliente.value;
-            if (!clienteId) {
-                alert("Selecione um cliente");
-                return;
-            }
-
-            if (produtosAdicionados.length === 0) {
-                alert("Adicione ao menos um produto");
-                return;
-            }
-
-            const produtos = produtosAdicionados.map((p) => ({
-                product_id: p.id,
-                preco_unitario: p.preco,
-                quantidade: p.quantidade,
-            }));
-
-            const parcelas = [];
-            document
-                .querySelectorAll("#tabelaVencimentos tbody tr")
-                .forEach((tr) => {
-                    const dataVenc = tr.querySelector(".data-vencimento").value;
-                    const valorParc = parseFloat(
-                        tr
-                            .querySelector(".valor-parcela")
-                            .value.replace(",", ".")
-                    );
-                    parcelas.push({
-                        data_vencimento: dataVenc,
-                        valor: valorParc,
-                    });
-                });
-
-            const valorTotalText =
-                document.getElementById("valorTotal").innerText;
-            const total =
-                parseFloat(
-                    valorTotalText.replace(/\./g, "").replace(",", ".")
-                ) || 0;
-
-            const numeroParcelas = parcelas.length;
-
-            const dadosVenda = {
-                customer_id: clienteId,
-                produtos,
-                total,
-                parcelas,
-                installments: numeroParcelas,
-                sale_date: new Date().toISOString().slice(0, 10), // yyyy-mm-dd
-            };
-
-            const token = document
-                .querySelector('meta[name="csrf-token"]')
-                .getAttribute("content");
-
-            const url = `/sales/${idVenda}`;
-
-            const response = await fetch(url, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": token,
-                },
-                body: JSON.stringify(dadosVenda),
-            });
-
-            const contentType = response.headers.get("content-type") || "";
-
-            if (!response.ok) {
-                if (contentType.includes("application/json")) {
-                    const erro = await response.json();
-                    alert(
-                        "Erro ao atualizar venda: " +
-                            (erro.message || response.statusText)
-                    );
-                } else {
-                    const text = await response.text();
-                    alert("Erro ao atualizar venda: " + text);
-                }
-                return;
-            }
-
-            if (contentType.includes("application/json")) {
-                const result = await response.json();
-                console.log("Resposta do backend:", result);
-
-                debugger;
-                alert("Venda atualizada com sucesso!");
-            } else {
-                debugger;
-
-                alert("Venda atualizada com sucesso!");
-            }
-            window.location.reload();
-        } catch (err) {
-            alert("Erro ao atualizar venda: " + err.message || err);
-        }
-    });
+        alert("Venda atualizada com sucesso!");
+        window.location.reload();
+    }
+});
