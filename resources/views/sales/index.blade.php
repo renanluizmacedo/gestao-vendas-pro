@@ -97,7 +97,6 @@
     </div>
 
     {{-- Modal Parcelamento --}}
-    {{-- Modal Parcelamento --}}
     <div class="modal fade" id="parcelamentoModal" tabindex="-1" aria-labelledby="parcelamentoModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -140,7 +139,6 @@
             </div>
         </div>
     </div>
-
 @stop
 
 @section('js')
@@ -155,6 +153,7 @@
             const btnAdicionar = document.getElementById('btnAdicionarProduto');
             const parcelasInput = document.getElementById('parcelas');
             const modalParcelamento = document.getElementById('parcelamentoModal');
+            const tabelaVencimentos = document.querySelector('#tabelaVencimentos tbody');
 
             selectCliente.addEventListener('change', () => {
                 const selected = selectCliente.selectedOptions[0];
@@ -168,19 +167,11 @@
 
             parcelasInput.addEventListener('input', () => {
                 inicializarParcelas();
-                atualizarValorParcela();
             });
-
-
 
             modalParcelamento.addEventListener('shown.bs.modal', () => {
                 inicializarParcelas();
-                atualizarValorParcela();
             });
-
-            const tabelaVencimentos = document.querySelector('#tabelaVencimentos tbody');
-
-
 
             tabelaVencimentos.addEventListener('click', (e) => {
                 if (e.target.closest('.btn-remover-parcela')) {
@@ -192,36 +183,124 @@
                 }
             });
 
-            tabelaVencimentos.addEventListener('change', (e) => {
-                if (e.target.classList.contains('data-vencimento')) {}
+            tabelaVencimentos.addEventListener('input', (e) => {
+                if (e.target.classList.contains('valor-parcela')) {
+                    recalcularParcelasAPartirDeEdicao(e.target);
+                }
             });
 
-            function adicionarLinhaParcela(data = '') {
+            function adicionarLinhaParcela(data = '', valor = 0) {
                 const numeroParcela = tabelaVencimentos.children.length + 1;
 
                 const tr = document.createElement('tr');
-
                 tr.innerHTML = `
-        <td>${numeroParcela} x</td>
-        <td><input type="date" class="form-control form-control-sm data-vencimento" value="${data}"></td>
-        <td class="valor-parcela">R$ 0,00</td>
-        <td style="text-align:center;">
-            <button type="button" class="btn btn-danger btn-sm btn-remover-parcela">
-                <i class="fas fa-trash-alt"></i>
-            </button>
-        </td>
-    `;
-
+                <td>${numeroParcela} x</td>
+                <td><input type="date" class="form-control form-control-sm data-vencimento" value="${data}"></td>
+                <td>
+                    <input type="text" class="form-control form-control-sm valor-parcela" value="R$ ${valor.toFixed(2).replace('.', ',')}">
+                </td>
+                <td style="text-align:center;">
+                    <button type="button" class="btn btn-danger btn-sm btn-remover-parcela">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            `;
                 tabelaVencimentos.appendChild(tr);
+            }
 
+            function inicializarParcelas() {
+                const parcelasCount = parseInt(parcelasInput.value) || 1;
+                const valorTotal = obterValorTotalVenda();
+                const tabelaVencimentos = document.querySelector('#tabelaVencimentos tbody');
+                const linhasAtuais = Array.from(tabelaVencimentos.children);
+
+                // Se precisar adicionar mais linhas
+                if (parcelasCount > linhasAtuais.length) {
+                    const valorParcela = valorTotal / parcelasCount;
+
+                    // Preservar datas e valores já existentes
+                    const datasExistentes = linhasAtuais.map(tr => tr.querySelector('.data-vencimento').value);
+                    const valoresExistentes = linhasAtuais.map(tr => {
+                        const valStr = tr.querySelector('.valor-parcela').value.replace('R$ ', '').replace(
+                            /\./g, '').replace(',', '.');
+                        return parseFloat(valStr) || 0;
+                    });
+
+                    // Limpar tbody para reconstruir
+                    tabelaVencimentos.innerHTML = '';
+
+                    for (let i = 0; i < parcelasCount; i++) {
+                        const data = datasExistentes[i] || '';
+                        const valor = valoresExistentes[i] || valorTotal / parcelasCount;
+                        adicionarLinhaParcela(data, valor);
+                    }
+
+                } else {
+                    // Se diminuiu o número de parcelas, remove as últimas
+                    while (tabelaVencimentos.children.length > parcelasCount) {
+                        tabelaVencimentos.removeChild(tabelaVencimentos.lastChild);
+                    }
+                }
+
+                atualizarNumerosParcelas();
                 atualizarValorParcela();
             }
 
 
             function atualizarNumerosParcelas() {
                 Array.from(tabelaVencimentos.children).forEach((tr, index) => {
-                    tr.children[0].textContent = index + 1;
+                    tr.children[0].textContent = `${index + 1} x`;
                 });
+            }
+
+            function obterValorTotalVenda() {
+                const valorTotalText = document.getElementById('valorTotal').innerText;
+                return parseFloat(valorTotalText.replace(/\./g, '').replace(',', '.')) || 0;
+            }
+
+            function atualizarValorParcela() {
+                const valorTotal = obterValorTotalVenda();
+                const linhas = tabelaVencimentos.querySelectorAll('tr');
+                const totalParcelas = linhas.length || 1;
+                const valorParcela = valorTotal / totalParcelas;
+
+                document.getElementById('valorParcela').innerText = valorParcela.toFixed(2).replace('.', ',');
+                document.getElementById('valorTotalVenda').innerText = valorTotal.toFixed(2).replace('.', ',');
+
+                linhas.forEach((tr) => {
+                    const input = tr.querySelector('.valor-parcela');
+                    if (input && !input.disabled) {
+                        input.value = `R$ ${valorParcela.toFixed(2).replace('.', ',')}`;
+                    }
+                });
+            }
+
+            function recalcularParcelasAPartirDeEdicao(inputEditado) {
+                const linhas = Array.from(tabelaVencimentos.querySelectorAll('tr'));
+                const indexEditado = linhas.findIndex(tr => tr.contains(inputEditado));
+
+                let valorTotal = obterValorTotalVenda();
+                let valorEditado = parseFloat(inputEditado.value.replace('R$ ', '').replace(/\./g, '').replace(',',
+                    '.')) || 0;
+
+                let qtdRestante = linhas.length - 1;
+                if (qtdRestante <= 0) return;
+
+                let valorRestante = valorTotal - valorEditado;
+                let valorParcelaRestante = valorRestante / qtdRestante;
+
+                linhas.forEach((tr, idx) => {
+                    const input = tr.querySelector('.valor-parcela');
+
+                    if (idx === indexEditado) {
+                        input.value = `R$ ${valorEditado.toFixed(2).replace('.', ',')}`;
+                    } else {
+                        input.value = `R$ ${valorParcelaRestante.toFixed(2).replace('.', ',')}`;
+                    }
+                });
+
+                document.getElementById('valorParcela').innerText = '-';
+                document.getElementById('valorTotalVenda').innerText = valorTotal.toFixed(2).replace('.', ',');
             }
 
             function adicionarProduto() {
@@ -254,21 +333,21 @@
                 produtosAdicionados.forEach(p => {
                     const subtotal = p.preco * p.quantidade;
                     tbody.innerHTML += `
-                        <tr>
-                            <td>${p.nome}</td>
-                            <td>R$ ${p.preco.toFixed(2).replace('.', ',')}</td>
-                            <td>
-                                <input type="number" min="1" value="${p.quantidade}" style="width:60px"
-                                onchange="alterarQuantidade('${p.id}', this.value)">
-                            </td>
-                            <td>R$ ${subtotal.toFixed(2).replace('.', ',')}</td>
-                            <td style="text-align:center; vertical-align: middle;">
-                                <button class="btn btn-danger btn-sm px-3 py-1" onclick="removerProduto('${p.id}')">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
+                    <tr>
+                        <td>${p.nome}</td>
+                        <td>R$ ${p.preco.toFixed(2).replace('.', ',')}</td>
+                        <td>
+                            <input type="number" min="1" value="${p.quantidade}" style="width:60px"
+                            onchange="alterarQuantidade('${p.id}', this.value)">
+                        </td>
+                        <td>R$ ${subtotal.toFixed(2).replace('.', ',')}</td>
+                        <td style="text-align:center; vertical-align: middle;">
+                            <button class="btn btn-danger btn-sm px-3 py-1" onclick="removerProduto('${p.id}')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
                 });
 
                 atualizarResumo();
@@ -302,46 +381,12 @@
                 btnPagamento.disabled = produtosAdicionados.length === 0;
             }
 
-            function atualizarValorParcela() {
-                const valorTotalText = document.getElementById('valorTotal').innerText;
-                const valorTotal = parseFloat(valorTotalText.replace(/\./g, '').replace(',', '.')) || 0;
-
-                const linhas = tabelaVencimentos.querySelectorAll('tr');
-                const totalParcelas = linhas.length || 1;
-                const valorParcela = valorTotal / totalParcelas;
-
-                // Atualiza valor total e valor geral da parcela
-                document.getElementById('valorParcela').innerText = valorParcela.toFixed(2).replace('.', ',');
-                document.getElementById('valorTotalVenda').innerText = valorTotal.toFixed(2).replace('.', ',');
-
-                // Atualiza os valores individuais das parcelas na tabela
-                linhas.forEach((tr) => {
-                    const cell = tr.querySelector('.valor-parcela');
-                    if (cell) {
-                        cell.textContent = `R$ ${valorParcela.toFixed(2).replace('.', ',')}`;
-                    }
-                });
-            }
-
-
-
-            function inicializarParcelas() {
-                tabelaVencimentos.innerHTML = '';
-                const parcelasCount = parseInt(parcelasInput.value) || 1;
-
-                for (let i = 0; i < parcelasCount; i++) {
-                    adicionarLinhaParcela('');
-                }
-            }
-
-
             window.adicionarProduto = adicionarProduto;
             window.alterarQuantidade = alterarQuantidade;
             window.removerProduto = removerProduto;
         });
     </script>
 
-    {{-- Ícones FontAwesome para os botões de lixeira --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         integrity="sha512-papbE4dUrbxvBPtqyb7+6qTce4HGXDq0TxEexzH8XvdODZLllfJcsjkz2/fnUz1FKOQYFDfZ07jw2u2vbuqKkg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
