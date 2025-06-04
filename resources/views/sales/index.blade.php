@@ -124,11 +124,13 @@
                                 <tr>
                                     <th>Parcela</th>
                                     <th>Data de Vencimento</th>
+                                    <th>Valor da Parcela</th>
                                     <th>Ação</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
                         </table>
+
 
                     </form>
                 </div>
@@ -185,14 +187,13 @@
                     const tr = e.target.closest('tr');
                     tr.remove();
                     atualizarNumerosParcelas();
+                    parcelasInput.value = tabelaVencimentos.children.length;
                     atualizarValorParcela();
                 }
             });
 
             tabelaVencimentos.addEventListener('change', (e) => {
-                if (e.target.classList.contains('data-vencimento')) {
-                    // Pode adicionar validação da data aqui se quiser
-                }
+                if (e.target.classList.contains('data-vencimento')) {}
             });
 
             function adicionarLinhaParcela(data = '') {
@@ -201,19 +202,21 @@
                 const tr = document.createElement('tr');
 
                 tr.innerHTML = `
-                    <td>${numeroParcela}</td>
-                    <td><input type="date" class="form-control form-control-sm data-vencimento" value="${data}"></td>
-                    <td style="text-align:center;">
-                        <button type="button" class="btn btn-danger btn-sm btn-remover-parcela">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </td>
-                `;
+        <td>${numeroParcela} x</td>
+        <td><input type="date" class="form-control form-control-sm data-vencimento" value="${data}"></td>
+        <td class="valor-parcela">R$ 0,00</td>
+        <td style="text-align:center;">
+            <button type="button" class="btn btn-danger btn-sm btn-remover-parcela">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </td>
+    `;
 
                 tabelaVencimentos.appendChild(tr);
 
                 atualizarValorParcela();
             }
+
 
             function atualizarNumerosParcelas() {
                 Array.from(tabelaVencimentos.children).forEach((tr, index) => {
@@ -295,7 +298,6 @@
 
                 atualizarValorParcela();
 
-                // Bloquear ou desbloquear botão de pagamento
                 const btnPagamento = document.getElementById('btnPagamento');
                 btnPagamento.disabled = produtosAdicionados.length === 0;
             }
@@ -304,12 +306,24 @@
                 const valorTotalText = document.getElementById('valorTotal').innerText;
                 const valorTotal = parseFloat(valorTotalText.replace(/\./g, '').replace(',', '.')) || 0;
 
-                const totalParcelas = tabelaVencimentos.children.length || 1;
+                const linhas = tabelaVencimentos.querySelectorAll('tr');
+                const totalParcelas = linhas.length || 1;
                 const valorParcela = valorTotal / totalParcelas;
 
+                // Atualiza valor total e valor geral da parcela
                 document.getElementById('valorParcela').innerText = valorParcela.toFixed(2).replace('.', ',');
                 document.getElementById('valorTotalVenda').innerText = valorTotal.toFixed(2).replace('.', ',');
+
+                // Atualiza os valores individuais das parcelas na tabela
+                linhas.forEach((tr) => {
+                    const cell = tr.querySelector('.valor-parcela');
+                    if (cell) {
+                        cell.textContent = `R$ ${valorParcela.toFixed(2).replace('.', ',')}`;
+                    }
+                });
             }
+
+
 
             function inicializarParcelas() {
                 tabelaVencimentos.innerHTML = '';
