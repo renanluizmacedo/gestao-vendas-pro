@@ -19,7 +19,6 @@ return new class extends Migration
             $table->decimal('total', 10, 2)->default(0); 
             $table->string('payment_method')->nullable(); 
             $table->integer('installments')->default(1); 
-            $table->text('observation')->nullable(); 
             $table->timestamps();
         });
     }
