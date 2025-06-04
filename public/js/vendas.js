@@ -49,7 +49,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function adicionarLinhaParcela(data = "", valor = 0) {
         const numeroParcela = tabelaVencimentos.children.length + 1;
-        console.log("Valor para o input:", valor); // Verifique aqui
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
@@ -168,8 +167,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function onInputEditado(e) {
-        console.log("Input editado:", e.target);
-        console.log("Valor digitado bruto:", e.target.value);
         recalcularParcelasAPartirDeEdicao(e.target);
     }
 
@@ -438,7 +435,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
     if (typeof vendaExistente !== "undefined") {
-        // 1. Selecionar cliente
         const clienteOption = document.querySelector(
             `#selectCliente option[value="${vendaExistente.customer_id}"]`
         );
@@ -450,10 +446,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 clienteOption.dataset.telefone || "-";
         }
 
-        // 2. Preencher produtos
         produtosAdicionados = vendaExistente.items.map((item) => {
-            console.log("Item price raw:", item.unit_price);
-
             // tenta converter o preço para número, se falhar, usa 0
             let precoParseado = parseFloat(item.unit_price);
             if (isNaN(precoParseado)) {
@@ -564,8 +557,6 @@ document
             const token = document
                 .querySelector('meta[name="csrf-token"]')
                 .getAttribute("content");
-            console.log("Dados enviados para o servidor:");
-            console.log(JSON.stringify(dadosVenda, null, 2));
 
             const url = "{{ route('sales.store') }}";
 
@@ -590,7 +581,6 @@ document
                     );
                 } else {
                     const text = await response.text();
-                    console.log(text);
 
                     alert("Erro ao salvar venda: " + text);
                 }
@@ -606,7 +596,115 @@ document
                 window.location.reload();
             }
         } catch (err) {
-            console.log(err);
             alert("Erro ao salvar venda: " + err);
+        }
+    });
+document
+    .getElementById("btnAtualizarVenda")
+    .addEventListener("click", async () => {
+        try {
+            const idVenda = document.getElementById("idVendaHidden").value;
+            if (!idVenda) {
+                alert("ID da venda não encontrado.");
+                return;
+            }
+
+            const selectCliente = document.getElementById("selectCliente");
+            const clienteId = selectCliente.value;
+            if (!clienteId) {
+                alert("Selecione um cliente");
+                return;
+            }
+
+            if (produtosAdicionados.length === 0) {
+                alert("Adicione ao menos um produto");
+                return;
+            }
+
+            const produtos = produtosAdicionados.map((p) => ({
+                product_id: p.id,
+                preco_unitario: p.preco,
+                quantidade: p.quantidade,
+            }));
+
+            const parcelas = [];
+            document
+                .querySelectorAll("#tabelaVencimentos tbody tr")
+                .forEach((tr) => {
+                    const dataVenc = tr.querySelector(".data-vencimento").value;
+                    const valorParc = parseFloat(
+                        tr
+                            .querySelector(".valor-parcela")
+                            .value.replace(",", ".")
+                    );
+                    parcelas.push({
+                        data_vencimento: dataVenc,
+                        valor: valorParc,
+                    });
+                });
+
+            const valorTotalText =
+                document.getElementById("valorTotal").innerText;
+            const total =
+                parseFloat(
+                    valorTotalText.replace(/\./g, "").replace(",", ".")
+                ) || 0;
+
+            const numeroParcelas = parcelas.length;
+
+            const dadosVenda = {
+                customer_id: clienteId,
+                produtos,
+                total,
+                parcelas,
+                installments: numeroParcelas,
+                sale_date: new Date().toISOString().slice(0, 10), // yyyy-mm-dd
+            };
+
+            const token = document
+                .querySelector('meta[name="csrf-token"]')
+                .getAttribute("content");
+
+            const url = `/sales/${idVenda}`;
+
+            const response = await fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": token,
+                },
+                body: JSON.stringify(dadosVenda),
+            });
+
+            const contentType = response.headers.get("content-type") || "";
+
+            if (!response.ok) {
+                if (contentType.includes("application/json")) {
+                    const erro = await response.json();
+                    alert(
+                        "Erro ao atualizar venda: " +
+                            (erro.message || response.statusText)
+                    );
+                } else {
+                    const text = await response.text();
+                    alert("Erro ao atualizar venda: " + text);
+                }
+                return;
+            }
+
+            if (contentType.includes("application/json")) {
+                const result = await response.json();
+                console.log("Resposta do backend:", result);
+
+                debugger;
+                alert("Venda atualizada com sucesso!");
+            } else {
+                debugger;
+
+                alert("Venda atualizada com sucesso!");
+            }
+            window.location.reload();
+        } catch (err) {
+            alert("Erro ao atualizar venda: " + err.message || err);
         }
     });

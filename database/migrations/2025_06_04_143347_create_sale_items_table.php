@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('sale_id')->constrained('sales')->onDelete('cascade');
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->integer('quantity');
-            $table->decimal('unit_price', 10, 2);  // valor unitário no momento da venda
-            $table->decimal('subtotal', 10, 2);    // quantidade * unit_price
+            $table->decimal('unit_price', 10, 2);  
+            $table->decimal('subtotal', 10, 2);   
             $table->timestamps();
         });
     }

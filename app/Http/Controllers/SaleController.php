@@ -128,6 +128,7 @@ class SaleController extends Controller
         $customers = Customer::all();
         $paymentMethods = ['Dinheiro', 'Cartão', 'Boleto', 'Pix'];
         $products = Product::all();
+
         return view('sales.edit', compact('sale', 'customers', 'paymentMethods', 'products'));
     }
 
@@ -137,8 +138,36 @@ class SaleController extends Controller
      */
     public function update(UpdateSaleRequest $request, Sale $sale)
     {
-        //
+        $sale->customer_id = $request->customer_id;
+        $sale->total = $request->total;
+        $sale->installments = $request->installments;
+        $sale->sale_date = $request->sale_date;
+        $sale->save();
+
+        $sale->items()->delete();
+
+        $sale->items()->delete();
+
+        foreach ($request->produtos as $produto) {
+            $quantity = $produto['quantidade'];
+            $unitPrice = $produto['preco_unitario'];
+            $subtotal = $quantity * $unitPrice;
+
+            $sale->items()->create([
+                'product_id' => $produto['product_id'],
+                'unit_price' => $unitPrice,
+                'quantity' => $quantity,
+                'subtotal' => $subtotal,
+            ]);
+        }
+
+
+        return response()->json([
+            'request' => $request->all(),
+            'sale' => $sale,
+        ]);
     }
+
 
     /**
      * Remove the specified resource from storage.

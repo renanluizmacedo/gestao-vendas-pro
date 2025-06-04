@@ -8,7 +8,8 @@
 
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="editModalLabel">Editar Venda</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Fechar"></button>
                 </div>
 
                 <div class="modal-body">
@@ -21,7 +22,7 @@
                             <label for="edit_customer_id" class="form-label">Cliente</label>
                             <select id="edit_customer_id" name="customer_id" class="form-control" required>
                                 {{-- Popule com os clientes via backend --}}
-                                @foreach($customers as $customer)
+                                @foreach ($customers as $customer)
                                     <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                                 @endforeach
                             </select>
@@ -32,7 +33,8 @@
                         </div>
                         <div class="col-md-4">
                             <label for="edit_payment_method" class="form-label">Método de Pagamento</label>
-                            <input type="text" id="edit_payment_method" name="payment_method" class="form-control" required />
+                            <input type="text" id="edit_payment_method" name="payment_method" class="form-control"
+                                required />
                         </div>
                     </div>
 
@@ -51,7 +53,8 @@
                     {{-- Partial 3: Aqui o campo de parcelas --}}
                     <div class="mb-3 mt-3">
                         <label for="edit_installments" class="form-label">Número de Parcelas</label>
-                        <input type="number" id="edit_installments" name="installments" class="form-control" min="1" max="24" />
+                        <input type="number" id="edit_installments" name="installments" class="form-control"
+                            min="1" max="24" />
                     </div>
 
                     <div>
