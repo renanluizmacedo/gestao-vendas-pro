@@ -18,6 +18,9 @@ class SaleController extends Controller
 
     public function index()
     {
+            
+        $products = Product::with('category')->get();
+        $customers = Customer::all();
         $sales = Sale::with(['items.product', 'saleInstallments', 'customer', 'user'])->paginate(10);
         $salesForJs = $sales->getCollection()->map(function ($sale) {
             return [
@@ -46,7 +49,7 @@ class SaleController extends Controller
             ];
         })->toArray();
 
-        return view('sales.index', compact('sales', 'salesForJs'));
+        return view('sales.index', compact('sales', 'salesForJs','products','customers'));
     }
 
 
