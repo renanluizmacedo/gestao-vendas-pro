@@ -279,65 +279,77 @@
                 });
             }
 
-            function parseValorMonetario(valor) {
-                return parseFloat(valor.replace(/[R$\s\.]/g, '').replace(',', '.')) || 0;
+            function formatarValorMonetario(valor) {
+                return `R$ ${valor.toFixed(2).replace('.', ',')}`;
+            }
+
+            function parseValorMonetario(valorStr) {
+                if (!valorStr) return 0;
+                // Remove espaços e converte vírgula para ponto, se houver
+                valorStr = valorStr.replace(/\s/g, '').replace(',', '.').replace('R$', '');
+                const valor = parseFloat(valorStr);
+                return isNaN(valor) ? 0 : valor;
+            }
+
+            function configurarListenersDeParcelas() {
+                const inputs = document.querySelectorAll('.valor-parcela');
+                inputs.forEach((input) => {
+                    input.removeEventListener('input', onInputEditado);
+                    input.addEventListener('input', onInputEditado);
+                });
+            }
+
+            function onInputEditado(e) {
+                recalcularParcelasAPartirDeEdicao(e.target);
             }
 
             function recalcularParcelasAPartirDeEdicao(inputEditado) {
-                const linhas = Array.from(tabelaVencimentos.querySelectorAll('tr'));
-                const indexEditado = linhas.findIndex(tr => tr.contains(inputEditado));
+                const linhas = Array.from(document.querySelectorAll('#tabelaVencimentos tbody tr'));
 
-                const valorTotal = obterValorTotalVenda();
-                const valorEditado = parseValorMonetario(inputEditado.value);
-
-                if (valorEditado > valorTotal) {
-                    alert('O valor da parcela não pode ser maior que o valor total da venda.');
-                    atualizarValorParcela();
-                    return;
-                }
-
-                const qtdParcelas = linhas.length;
-                if (qtdParcelas <= 1) return;
-
-                // Marca como editado
                 inputEditado.setAttribute('data-editado', 'true');
 
-                // Soma os valores já editados
+                const valorTotal = obterValorTotalVenda();
+
                 let somaEditados = 0;
-                let qtdRestante = 0;
+                let naoEditados = [];
 
                 linhas.forEach((tr) => {
                     const input = tr.querySelector('.valor-parcela');
+                    const valor = parseValorMonetario(input.value);
                     if (input.getAttribute('data-editado') === 'true') {
-                        somaEditados += parseValorMonetario(input.value);
+                        somaEditados += valor;
                     } else {
-                        qtdRestante++;
+                        naoEditados.push(input);
                     }
                 });
 
-                const valorRestante = valorTotal - somaEditados;
+                const restante = valorTotal - somaEditados;
 
-                if (valorRestante < 0) {
+                if (restante < 0) {
                     alert('A soma das parcelas editadas excede o valor total.');
                     inputEditado.removeAttribute('data-editado');
                     atualizarValorParcela();
                     return;
                 }
 
-                const valorParcelaRestante = qtdRestante > 0 ? valorRestante / qtdRestante : 0;
+                if (naoEditados.length === 0) return;
 
-                linhas.forEach((tr) => {
-                    const input = tr.querySelector('.valor-parcela');
-                    if (input.getAttribute('data-editado') !== 'true') {
-                        input.value = `R$ ${valorParcelaRestante.toFixed(2).replace('.', ',')}`;
+                let valorPadrao = parseFloat((restante / naoEditados.length).toFixed(2));
+                let somaDistribuida = valorPadrao * naoEditados.length;
+                let diferenca = restante - somaDistribuida;
+
+                naoEditados.forEach((input, index) => {
+                    let valorFinal = valorPadrao;
+                    if (index === naoEditados.length - 1) {
+                        valorFinal += diferenca;
                     }
+                    input.value = valorFinal.toFixed(2);
                 });
 
-                // Atualiza valor total exibido
-                document.getElementById('valorTotalVenda').innerText = valorTotal.toFixed(2).replace('.', ',');
+                document.getElementById('valorTotalVenda').innerText = formatarValorMonetario(valorTotal);
+
+                configurarListenersDeParcelas();
             }
-
-
 
 
             function adicionarProduto() {
