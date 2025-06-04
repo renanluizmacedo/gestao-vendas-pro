@@ -62,7 +62,9 @@
                 <div class="modal-footer">
 
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                    <button type="button" class="btn btn-primary" id="btnSalvarVenda">Salvar Venda</button>
+                    @if (Route::currentRouteName() === 'sales.create')
+                        <button type="button" class="btn btn-primary" id="btnSalvarVenda">Salvar Venda</button>
+                    @endif
 
                 </div>
             </div>
