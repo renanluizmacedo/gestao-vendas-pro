@@ -110,8 +110,33 @@
                     <form id="formParcelamento">
                         <div class="mb-3">
                             <label for="parcelas" class="form-label">Número de Parcelas</label>
-                            <input type="number" id="parcelas" class="form-control form-control-sm" min="1"
-                                value="1">
+                            <select id="parcelas" class="form-control form-select-sm">
+                                <option value="1">1x</option>
+                                <option value="2">2x</option>
+                                <option value="3">3x</option>
+                                <option value="4">4x</option>
+                                <option value="5">5x</option>
+                                <option value="6">6x</option>
+                                <option value="7">7x</option>
+                                <option value="8">8x</option>
+                                <option value="9">9x</option>
+                                <option value="10">10x</option>
+                                <option value="11">11x</option>
+                                <option value="12">12x</option>
+                                <option value="13">13x</option>
+                                <option value="14">14x</option>
+                                <option value="15">15x</option>
+                                <option value="16">16x</option>
+                                <option value="17">17x</option>
+                                <option value="18">18x</option>
+                                <option value="19">19x</option>
+                                <option value="20">20x</option>
+                                <option value="21">21x</option>
+                                <option value="22">22x</option>
+                                <option value="23">23x</option>
+                                <option value="24">24x</option>
+                            </select>
+
                         </div>
 
                         <p><strong>Valor Total da Venda:</strong> R$ <span id="valorTotalVenda">0,00</span></p>
@@ -300,56 +325,61 @@
             }
 
             function onInputEditado(e) {
+                console.log('Input editado:', e.target);
+                console.log('Valor digitado bruto:', e.target.value);
                 recalcularParcelasAPartirDeEdicao(e.target);
             }
 
             function recalcularParcelasAPartirDeEdicao(inputEditado) {
                 const linhas = Array.from(document.querySelectorAll('#tabelaVencimentos tbody tr'));
+                const inputs = linhas.map(tr => tr.querySelector('.valor-parcela'));
 
                 inputEditado.setAttribute('data-editado', 'true');
 
                 const valorTotal = obterValorTotalVenda();
 
-                let somaEditados = 0;
-                let naoEditados = [];
+                // Índice da parcela editada
+                const indexEditado = inputs.indexOf(inputEditado);
 
-                linhas.forEach((tr) => {
-                    const input = tr.querySelector('.valor-parcela');
-                    const valor = parseValorMonetario(input.value);
-                    if (input.getAttribute('data-editado') === 'true') {
-                        somaEditados += valor;
-                    } else {
-                        naoEditados.push(input);
-                    }
-                });
+                // Soma das parcelas até a editada (inclusive)
+                let somaAnteriorEAAtual = 0;
+                for (let i = 0; i <= indexEditado; i++) {
+                    const valor = parseValorMonetario(inputs[i].value);
+                    somaAnteriorEAAtual += valor;
+                }
 
-                const restante = valorTotal - somaEditados;
+                // Calcular restante para redistribuir nas parcelas seguintes
+                const restante = valorTotal - somaAnteriorEAAtual;
 
                 if (restante < 0) {
-                    alert('A soma das parcelas editadas excede o valor total.');
+                    alert('A soma das parcelas excede o valor total.');
                     inputEditado.removeAttribute('data-editado');
-                    atualizarValorParcela();
+                    atualizarValorParcela(); // Reseta valores, se necessário
                     return;
                 }
 
-                if (naoEditados.length === 0) return;
+                const posteriores = inputs.slice(indexEditado + 1);
 
-                let valorPadrao = parseFloat((restante / naoEditados.length).toFixed(2));
-                let somaDistribuida = valorPadrao * naoEditados.length;
+                if (posteriores.length === 0) return;
+
+                let valorPadrao = parseFloat((restante / posteriores.length).toFixed(2));
+                let somaDistribuida = valorPadrao * posteriores.length;
                 let diferenca = restante - somaDistribuida;
 
-                naoEditados.forEach((input, index) => {
+                posteriores.forEach((input, index) => {
                     let valorFinal = valorPadrao;
-                    if (index === naoEditados.length - 1) {
+                    if (index === posteriores.length - 1) {
                         valorFinal += diferenca;
                     }
                     input.value = valorFinal.toFixed(2);
+                    input.removeAttribute('data-editado'); // Limpa flag de edição anterior
                 });
 
-                document.getElementById('valorTotalVenda').innerText = formatarValorMonetario(valorTotal);
+                document.getElementById('valorTotalVenda').innerText = valorTotal.toFixed(2).replace('.', ',');
 
-                configurarListenersDeParcelas();
+                configurarListenersDeParcelas(); // Caso queira manter escuta por input
             }
+
 
 
             function adicionarProduto() {
