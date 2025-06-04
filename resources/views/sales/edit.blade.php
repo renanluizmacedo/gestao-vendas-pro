@@ -1,10 +1,10 @@
 @extends('adminlte::page')
 
-@section('title', 'Nova Venda')
+@section('title', 'Editar Venda')
 
 @section('content_header')
 
-    <h1 class="font-weight-bold">Nova Venda</h1>
+    <h1 class="font-weight-bold">Atualizar Venda</h1>
 @stop
 
 @section('content')
@@ -33,7 +33,10 @@
         };
     </script>
     <script src="{{ asset('js/vendas.js') }}"></script>
-
+    <script>
+        const vendaExistente = {!! json_encode($sale) !!};
+        const produtosDisponiveis = {!! json_encode($products) !!};
+    </script>
 
 
 @stop

@@ -35,9 +35,8 @@
                                     <a href="#" class="btn btn-info mr-2"
                                         onclick="showInfoModal({{ $sale->id }})">Info</a>
 
-                                    <a href="#"
-                                        onclick="showEditModal({{ $sale->id }}, {{ $sale->customer_id }}, '{{ $sale->sale_date }}', '{{ $sale->total }}', '{{ $sale->payment_method }}', '{{ $sale->installments }}', '{{ addslashes($sale->observation) }}')"
-                                        class="btn btn-primary mr-2">Editar</a>
+                                    <a href="{{ route('sales.edit', $sale->id) }}" class="btn btn-primary mr-2">Editar</a>
+
                                     <a href="#"
                                         onclick="showRemoveModal({{ $sale->id }}, '{{ $sale->customer->name }}')"
                                         class="btn btn-danger">Excluir</a>

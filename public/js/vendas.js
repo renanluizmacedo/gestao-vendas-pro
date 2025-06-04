@@ -148,10 +148,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function formatarValorMonetario(valor) {
-        return `R$ ${valor.toFixed(2).replace(".", ",")}`;
-    }
-
     function parseValorMonetario(valorStr) {
         if (!valorStr) return 0;
         // Remove espaços e converte vírgula para ponto, se houver
@@ -441,15 +437,73 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     });
+    if (typeof vendaExistente !== "undefined") {
+        // 1. Selecionar cliente
+        const clienteOption = document.querySelector(
+            `#selectCliente option[value="${vendaExistente.customer_id}"]`
+        );
+        if (clienteOption) {
+            clienteOption.selected = true;
+            document.getElementById("clienteNome").innerText =
+                clienteOption.dataset.nome || "-";
+            document.getElementById("clienteTelefone").innerText =
+                clienteOption.dataset.telefone || "-";
+        }
 
-    function adicionarEventoBlurPreco() {
-        document.querySelectorAll(".preco-unitario").forEach((input) => {
-            input.addEventListener("blur", function () {
-                const id = this.dataset.id;
-                alterarPreco(id, this.value);
-                atualizarTabela();
-            });
+        // 2. Preencher produtos
+        produtosAdicionados = vendaExistente.items.map((item) => {
+            console.log("Item price raw:", item.unit_price);
+
+            // tenta converter o preço para número, se falhar, usa 0
+            let precoParseado = parseFloat(item.unit_price);
+            if (isNaN(precoParseado)) {
+                console.warn(
+                    `Preço inválido para product_id ${item.product_id}, setando 0`
+                );
+                precoParseado = 0;
+            }
+
+            // quantidade também deve ser numérica
+            let quantidadeParseada = parseInt(item.quantity);
+            if (isNaN(quantidadeParseada)) {
+                console.warn(
+                    `Quantidade inválida para product_id ${item.product_id}, setando 0`
+                );
+                quantidadeParseada = 0;
+            }
+
+            const produtoInfo = produtosDisponiveis.find(
+                (p) => p.id == item.product_id
+            );
+
+            return {
+                id: item.product_id,
+                nome: produtoInfo ? produtoInfo.name : "Produto não encontrado",
+                preco: precoParseado,
+                quantidade: quantidadeParseada,
+            };
         });
+
+        atualizarTabela();
+
+        const parcelasInput = document.getElementById("parcelas");
+        const tabelaVencimentos = document.querySelector(
+            "#tabelaVencimentos tbody"
+        );
+
+        const parcelas = vendaExistente.sale_installments || [];
+        parcelasInput.value = parcelas.length;
+
+        tabelaVencimentos.innerHTML = "";
+        parcelas.forEach((parcela) => {
+            adicionarLinhaParcela(parcela.due_date, parseFloat(parcela.amount));
+        });
+
+        atualizarNumerosParcelas();
+        atualizarValorParcela();
+
+        // 4. Ativar botão pagamento
+        document.getElementById("btnPagamento").disabled = false;
     }
     window.adicionarProduto = adicionarProduto;
     window.alterarQuantidade = alterarQuantidade;

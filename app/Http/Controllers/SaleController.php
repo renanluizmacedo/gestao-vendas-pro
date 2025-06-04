@@ -18,7 +18,7 @@ class SaleController extends Controller
 
     public function index()
     {
-            
+
         $products = Product::with('category')->get();
         $customers = Customer::all();
         $sales = Sale::with(['items.product', 'saleInstallments', 'customer', 'user'])->paginate(10);
@@ -49,7 +49,7 @@ class SaleController extends Controller
             ];
         })->toArray();
 
-        return view('sales.index', compact('sales', 'salesForJs','products','customers'));
+        return view('sales.index', compact('sales', 'salesForJs', 'products', 'customers'));
     }
 
 
@@ -122,10 +122,15 @@ class SaleController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Sale $sale)
+    public function edit($id)
     {
-        //
+        $sale = Sale::with(['customer', 'user', 'items', 'saleInstallments'])->findOrFail($id);
+        $customers = Customer::all();
+        $paymentMethods = ['Dinheiro', 'Cartão', 'Boleto', 'Pix'];
+        $products = Product::all();
+        return view('sales.edit', compact('sale', 'customers', 'paymentMethods', 'products'));
     }
+
 
     /**
      * Update the specified resource in storage.
