@@ -115,9 +115,9 @@
                         </div>
 
                         <p><strong>Valor Total da Venda:</strong> R$ <span id="valorTotalVenda">0,00</span></p>
-                        <p><strong>Valor da Parcela:</strong> R$ <span id="valorParcela">0,00</span></p>
-
-                        <p><strong>Parcelas:</strong></p>
+                        <p hidden>
+                            <strong>Valor da Parcela:</strong> R$ <span id="valorParcela">0,00</span>
+                        </p>
                         <table class="table table-bordered w-100" id="tabelaVencimentos">
                             <thead>
                                 <tr>
@@ -285,20 +285,27 @@
 
                 if (valorEditado > valorTotal) {
                     alert('O valor da parcela não pode ser maior que o valor total da venda.');
-                    // Resetar para o valor proporcional correto
                     atualizarValorParcela();
                     return;
                 }
 
-                // Quantidade de parcelas restantes para dividir o restante
-                const qtdRestante = linhas.length - 1;
-                if (qtdRestante <= 0) return;
+                const qtdParcelas = linhas.length;
+                if (qtdParcelas <= 1) return;
 
+                const parcelasRestantes = qtdParcelas - 1;
                 const valorRestante = valorTotal - valorEditado;
-                const valorParcelaRestante = valorRestante / qtdRestante;
+
+                if (valorRestante < 0) {
+                    alert('Valor das parcelas excede o valor total da venda.');
+                    atualizarValorParcela();
+                    return;
+                }
+
+                const valorParcelaRestante = (valorRestante / parcelasRestantes);
 
                 linhas.forEach((tr, idx) => {
                     const input = tr.querySelector('.valor-parcela');
+
                     if (idx === indexEditado) {
                         input.value = `R$ ${valorEditado.toFixed(2).replace('.', ',')}`;
                     } else {
@@ -306,6 +313,7 @@
                     }
                 });
 
+                // Atualiza valores visuais
                 document.getElementById('valorParcela').innerText = '-';
                 document.getElementById('valorTotalVenda').innerText = valorTotal.toFixed(2).replace('.', ',');
             }
@@ -375,7 +383,6 @@
                 atualizarResumo();
             }
 
-
             function alterarPreco(id, valorInput) {
                 const precoLimpo = valorInput.replace(/[^\d,]/g, '').replace(',', '.');
                 let preco = parseFloat(precoLimpo);
@@ -389,12 +396,8 @@
 
                 prod.preco = preco;
 
-                // Atualiza os subtotais e total da venda
                 atualizarTabela();
             }
-
-
-
 
             function alterarQuantidade(id, valor) {
                 const qtd = parseInt(valor);
@@ -410,7 +413,7 @@
                 produtosAdicionados = produtosAdicionados.filter(p => p.id != id);
                 atualizarTabela();
             }
-            // Atualiza o resumo geral (total de produtos e valor total da venda)
+
             function atualizarResumo(atualizarInputs = true) {
                 const totalProdutos = produtosAdicionados.reduce((acc, p) => acc + p.quantidade, 0);
                 const valorTotal = produtosAdicionados.reduce((acc, p) => acc + p.preco * p.quantidade, 0);
@@ -427,7 +430,6 @@
                 btnPagamento.disabled = produtosAdicionados.length === 0;
             }
 
-            // Evento para atualizar o preço unitário diretamente na tabela
             document.addEventListener('input', (e) => {
                 // Verifica se o campo alterado é de preço unitário
                 if (e.target.classList.contains('preco-unitario')) {
