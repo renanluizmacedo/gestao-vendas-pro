@@ -487,15 +487,32 @@
             }
 
             function alterarQuantidade(id, valor) {
+                // Se o valor estiver vazio, zera a quantidade internamente e atualiza subtotal vazio
+                if (valor.trim() === '') {
+                    const prod = produtosAdicionados.find(p => p.id == id);
+                    if (!prod) return;
+
+                    prod.quantidade = 0; // ou pode remover o produto, ou manter 0
+
+                    const inputQuantidade = document.querySelector(`.quantidade-produto[data-id="${id}"]`);
+                    if (!inputQuantidade) return;
+
+                    const tr = inputQuantidade.closest('tr');
+                    const subtotalCell = tr.querySelector('td:nth-child(4)');
+                    subtotalCell.textContent = ''; // deixa vazio
+
+                    atualizarResumo(false);
+                    return;
+                }
+
                 const qtd = parseInt(valor);
-                if (isNaN(qtd) || qtd < 1) return; // Ignora valores inválidos
+                if (isNaN(qtd) || qtd < 1) return;
 
                 const prod = produtosAdicionados.find(p => p.id == id);
                 if (!prod) return;
 
                 prod.quantidade = qtd;
 
-                // Atualiza o subtotal da linha sem recriar tabela
                 const inputQuantidade = document.querySelector(`.quantidade-produto[data-id="${id}"]`);
                 if (!inputQuantidade) return;
 
@@ -505,7 +522,6 @@
 
                 subtotalCell.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
 
-                // Atualiza resumo (total de itens e valor total)
                 atualizarResumo(false);
             }
 
@@ -515,19 +531,23 @@
             }
 
             function atualizarResumo(atualizarInputs = true) {
-                const totalProdutos = produtosAdicionados.reduce((acc, p) => acc + p.quantidade, 0);
-                const valorTotal = produtosAdicionados.reduce((acc, p) => acc + p.preco * p.quantidade, 0);
+                // Soma quantidade ignorando produtos com quantidade zero
+                const totalProdutos = produtosAdicionados.reduce((acc, p) => acc + (p.quantidade > 0 ? p
+                    .quantidade : 0), 0);
+                // Soma valores, ignorando produtos com quantidade zero
+                const valorTotal = produtosAdicionados.reduce((acc, p) => acc + (p.quantidade > 0 ? p.preco * p
+                    .quantidade : 0), 0);
 
-                // Atualiza os elementos do resumo
-                document.getElementById('totalProdutos').innerText = totalProdutos;
-                document.getElementById('valorTotal').innerText = valorTotal.toFixed(2).replace('.', ',');
+                document.getElementById('totalProdutos').innerText = totalProdutos > 0 ? totalProdutos : '';
+                document.getElementById('valorTotal').innerText = valorTotal > 0 ? valorTotal.toFixed(2).replace(
+                    '.', ',') : '';
 
-                // Atualiza o valor das parcelas, se aplicável
-                atualizarValorParcela();
+                if (atualizarInputs) {
+                    atualizarValorParcela();
+                }
 
-                // Habilita ou desabilita o botão de pagamento
                 const btnPagamento = document.getElementById('btnPagamento');
-                btnPagamento.disabled = produtosAdicionados.length === 0;
+                btnPagamento.disabled = produtosAdicionados.length === 0 || totalProdutos === 0;
             }
 
 
