@@ -4,8 +4,8 @@
             <div class="modal-content">
                 <div class="modal-header bg-secondary text-white">
                     <h5 class="modal-title" id="parcelamentoModalLabel">Configurar Parcelamento</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Fechar"></button>
+                    <button type="button" class="btn btn-close btn-danger" data-bs-dismiss="modal">Fechar</button>
+
                 </div>
                 <div class="modal-body">
                     <form id="formParcelamento">
@@ -61,7 +61,6 @@
                 </div>
                 <div class="modal-footer">
 
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                     @if (Route::currentRouteName() === 'sales.create')
                         <button type="button" class="btn btn-primary" id="btnSalvarVenda">Salvar Venda</button>
                     @endif

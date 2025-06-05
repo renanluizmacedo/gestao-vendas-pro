@@ -81,16 +81,14 @@
             </div>
         </div>
     </div>
-    {{-- Modal Informações da Venda --}}
-    <!-- Modal de informações da venda -->
-    <!-- Modal de informações da venda -->
+
     <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content border-0">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="infoModalLabel">📄 Detalhes da Venda</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Fechar"></button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Fechar</button>
+
                 </div>
                 <div class="modal-body">
                     <div class="mb-4 px-3 py-2 border rounded bg-light d-flex align-items-center">
@@ -141,30 +139,21 @@
                         </div>
                     </div>
 
-                    <div id="observationSection" class="mt-4 d-none">
-                        <div class="alert alert-secondary mb-0" role="alert">
-                            <strong>Observações:</strong>
-                            <span id="saleObservation" class="ms-2"></span>
-                        </div>
-                    </div>
+
                 </div>
 
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                </div>
+
             </div>
         </div>
     </div>
 
 
-    <!-- Modal de Remoção -->
     <div class="modal fade" id="removeModal" tabindex="-1" aria-labelledby="removeModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="removeModalLabel">Remover Venda</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Fechar"></button>
+
                 </div>
                 <div class="modal-body">
                     <p id="removeText"></p>
@@ -172,7 +161,7 @@
                     <input type="hidden" id="id_remove">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-close btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-danger" onclick="remove()">Confirmar Remoção</button>
                 </div>
             </div>
@@ -182,6 +171,8 @@
 @stop
 
 @section('js')
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         //const editModal = new bootstrap.Modal(document.getElementById('editModal'));
         const removeModal = new bootstrap.Modal(document.getElementById('removeModal'));

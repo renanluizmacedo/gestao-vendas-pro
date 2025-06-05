@@ -112,7 +112,6 @@
                 <div class="modal-content">
                     <div class="modal-header bg-warning">
                         <h5 class="modal-title text-white" id="createModalLabel">Cadastrar Cliente</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
@@ -147,7 +146,6 @@
                 <div class="modal-content">
                     <div class="modal-header bg-primary">
                         <h5 class="modal-title text-white" id="editModalLabel">Editar Cliente</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                     </div>
                     <div class="modal-body">
                         <input type="hidden" name="id" id="edit_id">
