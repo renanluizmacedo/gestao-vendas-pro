@@ -53,21 +53,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-                    <td>${numeroParcela} x</td>
-                    <td><input type="date" class="form-control form-control-sm data-vencimento" value="${data}"></td>
-                    <td>
-                        <input type="number" step="0.01" class="form-control form-control-sm valor-parcela" value="${valor.toFixed(
-                            2
-                        )}">
-                    </td>
-                    <td style="text-align:center;">
-                        <button type="button" class="btn btn-danger btn-sm btn-remover-parcela">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </td>
-                `;
+        <td>${numeroParcela} x</td>
+        <td><input type="date" class="form-control form-control-sm data-vencimento" value="${data}"></td>
+        <td>
+            <input type="number" step="0.01" class="form-control form-control-sm valor-parcela" value="${valor.toFixed(
+                2
+            )}">
+        </td>
+        <td style="text-align:center;">
+            <button type="button" class="btn btn-danger btn-sm btn-remover-parcela">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </td>
+    `;
         tabelaVencimentos.appendChild(tr);
+
+        // Atualiza o estado dos botões de remover diretamente aqui
+        const linhas = tabelaVencimentos.querySelectorAll("tr");
+        const botoes = tabelaVencimentos.querySelectorAll(
+            ".btn-remover-parcela"
+        );
+
+        botoes.forEach((btn) => {
+            btn.disabled = linhas.length === 1;
+        });
     }
+    document.addEventListener("click", function (e) {
+        if (e.target.closest(".btn-remover-parcela")) {
+            const btn = e.target.closest(".btn-remover-parcela");
+            btn.closest("tr").remove();
+
+            // Atualiza diretamente após remover
+            const linhas = tabelaVencimentos.querySelectorAll("tr");
+            const botoes = tabelaVencimentos.querySelectorAll(
+                ".btn-remover-parcela"
+            );
+
+            botoes.forEach((btn) => {
+                btn.disabled = linhas.length === 1;
+            });
+        }
+    });
 
     function inicializarParcelas() {
         const parcelasCount = parseInt(parcelasInput.value) || 1;
@@ -217,13 +243,11 @@ document.addEventListener("DOMContentLoaded", () => {
             input.removeAttribute("data-editado");
         });
 
-        // 🔁 Resetar todos os inputs para editáveis antes
         inputs.forEach((input) => {
             input.removeAttribute("readonly");
             input.classList.remove("bg-light");
         });
 
-        // ❌ Desativar somente o último input
         const ultimoInput = inputs[inputs.length - 1];
         ultimoInput.setAttribute("readonly", true);
         ultimoInput.classList.add("bg-light");
@@ -297,6 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         // Reatribuir eventos
+
         adicionarEventosTabela();
 
         atualizarResumo();
@@ -570,7 +595,6 @@ document.addEventListener("DOMContentLoaded", () => {
             0;
         console.log("Valor total calculado:", total);
 
-        // === Verificação da soma das parcelas ===
         const somaParcelas = parcelas.reduce((acc, p) => acc + p.valor, 0);
         const arredondar = (num) => Math.round(num * 100) / 100;
 
@@ -584,7 +608,6 @@ document.addEventListener("DOMContentLoaded", () => {
             );
             return;
         }
-        // =======================================
 
         const dadosVenda = {
             customer_id: clienteId,
@@ -696,8 +719,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const contentType = response.headers.get("content-type") || "";
-        console.log(response)
-        debugger
+
         if (!response.ok) {
             const mensagem = contentType.includes("application/json")
                 ? (await response.json()).message
