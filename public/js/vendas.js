@@ -696,7 +696,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const contentType = response.headers.get("content-type") || "";
-
+        console.log(response)
+        debugger
         if (!response.ok) {
             const mensagem = contentType.includes("application/json")
                 ? (await response.json()).message

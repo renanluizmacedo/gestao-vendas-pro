@@ -138,35 +138,49 @@ class SaleController extends Controller
      */
     public function update(UpdateSaleRequest $request, Sale $sale)
     {
-        $sale->customer_id = $request->customer_id;
-        $sale->total = $request->total;
-        $sale->installments = $request->installments;
-        $sale->sale_date = $request->sale_date;
-        $sale->save();
+        try {
+            $data = $request->all();
 
-        $sale->items()->delete();
-
-        $sale->items()->delete();
-
-        foreach ($request->produtos as $produto) {
-            $quantity = $produto['quantidade'];
-            $unitPrice = $produto['preco_unitario'];
-            $subtotal = $quantity * $unitPrice;
-
-            $sale->items()->create([
-                'product_id' => $produto['product_id'],
-                'unit_price' => $unitPrice,
-                'quantity' => $quantity,
-                'subtotal' => $subtotal,
+            // Atualizar dados principais da venda
+            $sale->update([
+                'customer_id' => $data['customer_id'],
+                'total' => $data['total'],
+                'installments' => $data['installments'],
+                'sale_date' => $data['sale_date'],
             ]);
+
+            // Remover registros antigos
+            $sale->items()->delete();
+            $sale->saleInstallments()->delete();
+
+            // Recriar produtos
+            foreach ($data['produtos'] as $produto) {
+                $sale->items()->create([
+                    'product_id' => $produto['product_id'],
+                    'quantity' => $produto['quantidade'],
+                    'unit_price' => $produto['preco_unitario'],
+                    'subtotal' => $produto['preco_unitario'] * $produto['quantidade'],
+                ]);
+            }
+
+            // Recriar parcelas
+            foreach ($data['parcelas'] as $index => $parcela) {
+                $sale->saleInstallments()->create([
+                    'installment_number' => $index + 1,
+                    'due_date' => $parcela['data_vencimento'],
+                    'amount' => $parcela['valor'],
+                ]);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Venda atualizada com sucesso!']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao atualizar a venda: ' . $e->getMessage(),
+            ], 500);
         }
-
-
-        return response()->json([
-            'request' => $request->all(),
-            'sale' => $sale,
-        ]);
     }
+
 
 
     /**
