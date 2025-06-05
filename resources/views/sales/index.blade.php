@@ -92,9 +92,10 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-4 px-3 py-2 border rounded bg-light d-flex align-items-center">
-                        <strong class="me-2">Vendedor: {{ $sale->user->name }}</strong>
+                        <strong class="me-2">Vendedor:</strong>
                         <span id="saleSellerName" class="fw-semibold text-primary"></span>
                     </div>
+
 
                     <div class="row g-4">
                         <div class="col-md-6">
@@ -182,6 +183,8 @@
         const infoModal = new bootstrap.Modal(document.getElementById('infoModal'));
 
         function showInfoModal(saleId) {
+            document.getElementById('saleSellerName').textContent = sale.user.name;
+
             const sale = salesData.find(sale => sale.id === saleId);
             if (!sale) {
                 alert('Venda não encontrada');

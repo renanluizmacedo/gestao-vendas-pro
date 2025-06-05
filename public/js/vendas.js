@@ -55,8 +55,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
         <td>${numeroParcela} x</td>
-        <td><input type="date" class="form-control form-control-sm data-vencimento" value="${data}"></td>
-        <td>
+            <td>
+                <input type="date" class="form-control form-control-sm data-vencimento" value="${data}" required>
+            </td>        
+            <td>
             <input 
                 type="number" 
                 step="0.01" 
@@ -118,7 +120,18 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
     });
+    function validarDatasAntesDeSalvar() {
+        const inputsDatas = document.querySelectorAll(".data-vencimento");
 
+        for (const input of inputsDatas) {
+            if (!input.value) {
+                alert("Por favor, preencha todas as datas de vencimento.");
+                input.focus();
+                return false; // impede o envio do formulário
+            }
+        }
+        return true; // todos preenchidos, pode enviar
+    }
     function inicializarParcelas() {
         const parcelasCount = parseInt(parcelasInput.value) || 1;
         const valorTotal = obterValorTotalVenda();
@@ -622,6 +635,16 @@ document.addEventListener("DOMContentLoaded", () => {
     async function salvarVenda() {
         console.log("Iniciando processo de salvar venda...");
 
+        // Validação das datas antes de qualquer outra coisa
+        const inputsDatas = document.querySelectorAll(".data-vencimento");
+        for (const input of inputsDatas) {
+            if (!input.value) {
+                alert("Por favor, preencha todas as datas de vencimento.");
+                input.focus();
+                return; // interrompe o salvamento se alguma data estiver vazia
+            }
+        }
+
         const selectCliente = document.getElementById("selectCliente");
         const clienteId = selectCliente.value;
         console.log("Cliente selecionado:", clienteId);
@@ -727,6 +750,16 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!idVenda) {
             alert("ID da venda não encontrado.");
             return;
+        }
+
+        // Verificação de datas vazias
+        const inputsDatas = document.querySelectorAll(".data-vencimento");
+        for (const input of inputsDatas) {
+            if (!input.value) {
+                alert("Por favor, preencha todas as datas de vencimento.");
+                input.focus();
+                return; // interrompe a atualização se alguma data estiver vazia
+            }
         }
 
         const selectCliente = document.getElementById("selectCliente");

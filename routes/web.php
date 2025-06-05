@@ -13,12 +13,13 @@ Auth::routes();
 
 
 Route::middleware(['auth'])->group(function () {
-    Route::redirect('/home', '/sales')->name('home');
-    Route::redirect('/', '/sales')->name('home');
+
 
     Route::resource('products', ProductController::class);
     Route::resource('categories', CategoryController::class);
     Route::resource('customers', CustomerController::class);
     Route::resource('sales', SaleController::class);
+    Route::redirect('/home', route('sales.index'))->name('home');
+    Route::redirect('/', route('sales.index'));
     Route::get('/sales/{id}/pdf', [SaleController::class, 'gerarPdf'])->name('sales.pdf');
 });

@@ -11,9 +11,10 @@ class Category extends Model
     /** @use HasFactory<\Database\Factories\CategoryFactory> */
     use HasFactory;
     use SoftDeletes;
+    protected $fillable = ['name'];
 
     public function products()
     {
-        return $this->hasMany(Product::class);
+        return $this->hasMany(Product::class)->withTrashed();;
     }
 }
