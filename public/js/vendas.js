@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const tabelaVencimentos = document.querySelector(
         "#tabelaVencimentos tbody"
     );
+
     atualizarTabela();
 
     selectCliente.addEventListener("change", () => {
@@ -435,6 +436,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
     if (typeof vendaExistente !== "undefined") {
+        console.log("📝 Venda existente detectada:", vendaExistente);
+
         const clienteOption = document.querySelector(
             `#selectCliente option[value="${vendaExistente.customer_id}"]`
         );
@@ -444,23 +447,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 clienteOption.dataset.nome || "-";
             document.getElementById("clienteTelefone").innerText =
                 clienteOption.dataset.telefone || "-";
+
+            console.log("👤 Cliente selecionado:");
+            console.log("  - Nome:", clienteOption.dataset.nome);
+            console.log("  - Telefone:", clienteOption.dataset.telefone);
+        } else {
+            console.warn("⚠️ Cliente não encontrado na lista de opções.");
         }
 
         produtosAdicionados = vendaExistente.items.map((item) => {
-            // tenta converter o preço para número, se falhar, usa 0
             let precoParseado = parseFloat(item.unit_price);
             if (isNaN(precoParseado)) {
                 console.warn(
-                    `Preço inválido para product_id ${item.product_id}, setando 0`
+                    `⚠️ Preço inválido para produto ${item.product_id}, setando 0`
                 );
                 precoParseado = 0;
             }
 
-            // quantidade também deve ser numérica
             let quantidadeParseada = parseInt(item.quantity);
             if (isNaN(quantidadeParseada)) {
                 console.warn(
-                    `Quantidade inválida para product_id ${item.product_id}, setando 0`
+                    `⚠️ Quantidade inválida para produto ${item.product_id}, setando 0`
                 );
                 quantidadeParseada = 0;
             }
@@ -469,12 +476,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 (p) => p.id == item.product_id
             );
 
-            return {
+            const produtoFinal = {
                 id: item.product_id,
                 nome: produtoInfo ? produtoInfo.name : "Produto não encontrado",
                 preco: precoParseado,
                 quantidade: quantidadeParseada,
             };
+
+            console.log("📦 Produto adicionado:", produtoFinal);
+            return produtoFinal;
         });
 
         atualizarTabela();
@@ -485,19 +495,27 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         const parcelas = vendaExistente.sale_installments || [];
+        console.log("💳 Parcelas carregadas da venda:", parcelas);
+
         parcelasInput.value = parcelas.length;
 
         tabelaVencimentos.innerHTML = "";
-        parcelas.forEach((parcela) => {
-            adicionarLinhaParcela(parcela.due_date, parseFloat(parcela.amount));
+        parcelas.forEach((parcela, i) => {
+            const valor = parseFloat(parcela.amount);
+            console.log(
+                `📅 Parcela ${i + 1}: Vencimento = ${
+                    parcela.due_date
+                }, Valor = ${valor}`
+            );
+            adicionarLinhaParcela(parcela.due_date, valor);
         });
 
         atualizarNumerosParcelas();
         atualizarValorParcela();
 
-        // 4. Ativar botão pagamento
         document.getElementById("btnPagamento").disabled = false;
     }
+
     window.adicionarProduto = adicionarProduto;
     window.alterarQuantidade = alterarQuantidade;
     window.removerProduto = removerProduto;
@@ -551,6 +569,22 @@ document.addEventListener("DOMContentLoaded", () => {
             parseFloat(valorTotalText.replace(/\./g, "").replace(",", ".")) ||
             0;
         console.log("Valor total calculado:", total);
+
+        // === Verificação da soma das parcelas ===
+        const somaParcelas = parcelas.reduce((acc, p) => acc + p.valor, 0);
+        const arredondar = (num) => Math.round(num * 100) / 100;
+
+        if (arredondar(somaParcelas) !== arredondar(total)) {
+            alert(
+                `A soma das parcelas (${somaParcelas.toFixed(
+                    2
+                )}) não corresponde ao valor total da venda (${total.toFixed(
+                    2
+                )}).`
+            );
+            return;
+        }
+        // =======================================
 
         const dadosVenda = {
             customer_id: clienteId,
