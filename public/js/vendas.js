@@ -50,15 +50,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function adicionarLinhaParcela(data = "", valor = 0) {
         const numeroParcela = tabelaVencimentos.children.length + 1;
+        const valorTotal = obterValorTotalVenda();
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
         <td>${numeroParcela} x</td>
         <td><input type="date" class="form-control form-control-sm data-vencimento" value="${data}"></td>
         <td>
-            <input type="number" step="0.01" class="form-control form-control-sm valor-parcela" value="${valor.toFixed(
-                2
-            )}">
+            <input 
+                type="number" 
+                step="0.01" 
+                class="form-control form-control-sm valor-parcela" 
+                value="${valor.toFixed(2)}"
+                ${numeroParcela === 1 ? `min="${valorTotal.toFixed(2)}"` : ""}
+            >
         </td>
         <td style="text-align:center;">
             <button type="button" class="btn btn-danger btn-sm btn-remover-parcela">
@@ -68,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
         tabelaVencimentos.appendChild(tr);
 
-        // Atualiza o estado dos botões de remover diretamente aqui
+        // Atualiza o estado dos botões de remover
         const linhas = tabelaVencimentos.querySelectorAll("tr");
         const botoes = tabelaVencimentos.querySelectorAll(
             ".btn-remover-parcela"
@@ -77,7 +82,50 @@ document.addEventListener("DOMContentLoaded", () => {
         botoes.forEach((btn) => {
             btn.disabled = linhas.length === 1;
         });
+
+        // Ajusta readonly do input da primeira parcela dependendo da quantidade de linhas
+        const primeiraLinha = tabelaVencimentos.querySelector("tr");
+        if (primeiraLinha) {
+            const inputPrimeiraParcela =
+                primeiraLinha.querySelector(".valor-parcela");
+            if (linhas.length === 1) {
+                // Só 1 parcela => readonly true + valor fixo = valor total + disabled
+                inputPrimeiraParcela.value = valorTotal.toFixed(2);
+                inputPrimeiraParcela.readOnly = true;
+                inputPrimeiraParcela.disabled = true; // <-- aqui
+                inputPrimeiraParcela.classList.add("bg-light");
+                inputPrimeiraParcela.min = valorTotal.toFixed(2);
+            } else {
+                // Mais de 1 parcela => torna editável e habilita input
+                inputPrimeiraParcela.readOnly = false;
+                inputPrimeiraParcela.disabled = false; // <-- aqui
+                inputPrimeiraParcela.classList.remove("bg-light");
+                inputPrimeiraParcela.min = "0";
+            }
+        }
     }
+function atualizarEstadoPrimeiraParcela() {
+    const linhas = tabelaVencimentos.querySelectorAll("tr");
+    const primeiraLinha = tabelaVencimentos.querySelector("tr");
+    const valorTotal = obterValorTotalVenda();
+
+    if (primeiraLinha) {
+        const inputPrimeiraParcela = primeiraLinha.querySelector(".valor-parcela");
+        if (linhas.length === 1) {
+            inputPrimeiraParcela.value = valorTotal.toFixed(2);
+            inputPrimeiraParcela.readOnly = true;
+            inputPrimeiraParcela.disabled = true;
+            inputPrimeiraParcela.classList.add("bg-light");
+            inputPrimeiraParcela.min = valorTotal.toFixed(2);
+        } else {
+            inputPrimeiraParcela.readOnly = false;
+            inputPrimeiraParcela.disabled = false;
+            inputPrimeiraParcela.classList.remove("bg-light");
+            inputPrimeiraParcela.min = "0";
+        }
+    }
+}
+
     document.addEventListener("click", function (e) {
         if (e.target.closest(".btn-remover-parcela")) {
             const btn = e.target.closest(".btn-remover-parcela");
@@ -196,7 +244,6 @@ document.addEventListener("DOMContentLoaded", () => {
     function onInputEditado(e) {
         recalcularParcelasAPartirDeEdicao(e.target);
     }
-
     function recalcularParcelasAPartirDeEdicao(inputEditado) {
         const linhas = Array.from(
             document.querySelectorAll("#tabelaVencimentos tbody tr")
@@ -243,6 +290,18 @@ document.addEventListener("DOMContentLoaded", () => {
             input.removeAttribute("data-editado");
         });
 
+        // 🔐 Impedir valor total inferior ao necessário
+        const somaTotalFinal = inputs.reduce((acc, input) => {
+            return acc + parseValorMonetario(input.value);
+        }, 0);
+
+        if (somaTotalFinal < valorTotal) {
+            alert("A soma das parcelas está abaixo do valor total da venda.");
+            atualizarValorParcela(); // opcional: volta ao estado original
+            return;
+        }
+
+        // Estética e bloqueio do último campo
         inputs.forEach((input) => {
             input.removeAttribute("readonly");
             input.classList.remove("bg-light");

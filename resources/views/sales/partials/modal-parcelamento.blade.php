@@ -12,7 +12,7 @@
                         <div class="mb-3">
                             <label for="parcelas" class="form-label">Número de Parcelas</label>
                             <select id="parcelas" class="form-control form-select-sm">
-                                <option value="1">1x</option>
+                                <option default value="1">1x</option>
                                 <option value="2">2x</option>
                                 <option value="3">3x</option>
                                 <option value="4">4x</option>
