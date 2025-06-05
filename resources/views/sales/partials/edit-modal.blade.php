@@ -31,11 +31,6 @@
                             <label for="edit_sale_date" class="form-label">Data da Venda</label>
                             <input type="date" id="edit_sale_date" name="sale_date" class="form-control" required />
                         </div>
-                        <div class="col-md-4">
-                            <label for="edit_payment_method" class="form-label">Método de Pagamento</label>
-                            <input type="text" id="edit_payment_method" name="payment_method" class="form-control"
-                                required />
-                        </div>
                     </div>
 
                     {{-- Linha 2: Observação --}}

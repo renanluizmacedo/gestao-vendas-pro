@@ -29,7 +29,6 @@ class SaleController extends Controller
                 'user_name' => $sale->user->name,
                 'sale_date' => \Carbon\Carbon::parse($sale->sale_date)->format('d/m/Y'),
                 'total' => $sale->total,
-                'payment_method' => $sale->payment_method,
                 'observation' => $sale->observation,
                 'items' => $sale->items->map(function ($item) {
                     return [
@@ -70,10 +69,11 @@ class SaleController extends Controller
      */
     public function store(StoreSaleRequest $request)
     {
-        try {
-            $data = $request->validated(); // <- ISSO FUNCIONA AQUI
 
-            // Agora você pode acessar todos os campos sem precisar de validação (temporariamente)
+        // ou simplesmente
+        try {
+            $data = $request->all();
+
             $sale = Sale::create([
                 'user_id' => Auth::id(),
                 'customer_id' => $data['customer_id'],
@@ -172,8 +172,19 @@ class SaleController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Sale $sale)
+    public function destroy($id)
     {
-        //
+        $sale = Sale::find($id);
+
+        if (!$sale) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Venda não encontrada.'
+            ], 404);
+        }
+
+        $sale->delete(); // método de instância para soft delete ou delete normal
+
+        return redirect()->back()->with('success', 'Venda excluída com sucesso.');
     }
 }

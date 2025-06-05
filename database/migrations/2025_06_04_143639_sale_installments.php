@@ -14,10 +14,12 @@ return new class extends Migration
         Schema::create('sale_installments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('sale_id')->constrained('sales')->onDelete('cascade');
-            $table->integer('installment_number'); 
+            $table->integer('installment_number');
             $table->date('due_date');
             $table->decimal('amount', 10, 2);
             $table->timestamps();
+            $table->softDeletes(); 
+
         });
     }
 

@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('cpf')->unique(); // CPF deve ser único
             $table->string('phone');
             $table->timestamps();
+            $table->softDeletes(); // coluna deleted_at
+
         });
     }
 

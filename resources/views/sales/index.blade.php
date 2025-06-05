@@ -19,7 +19,6 @@
                             <th>Data</th>
                             <th>Valor Total</th>
                             <th>Parcelas</th>
-                            <th>Método de Pagamento</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -30,7 +29,6 @@
                                 <td>{{ \Carbon\Carbon::parse($sale->sale_date)->format('d/m/Y') }}</td>
                                 <td>R$ {{ number_format($sale->total, 2, ',', '.') }}</td>
                                 <td>{{ $sale->installments }}</td>
-                                <td>{{ $sale->payment_method }}</td>
                                 <td class="d-flex">
                                     <a href="#" class="btn btn-info mr-2"
                                         onclick="showInfoModal({{ $sale->id }})">Info</a>
@@ -41,11 +39,12 @@
                                         onclick="showRemoveModal({{ $sale->id }}, '{{ $sale->customer->name }}')"
                                         class="btn btn-danger">Excluir</a>
 
-                                    <form action="{{ route('sales.destroy', $sale->id) }}" method="POST"
-                                        id="form_{{ $sale->id }}">
+                                    <form id="form_{{ $sale->id }}" action="{{ route('sales.destroy', $sale->id) }}"
+                                        method="POST" style="display: none;">
                                         @csrf
                                         @method('DELETE')
                                     </form>
+
                                 </td>
                             </tr>
                         @endforeach
@@ -125,13 +124,34 @@
     </div>
 
 
+    <!-- Modal de Remoção -->
+    <div class="modal fade" id="removeModal" tabindex="-1" aria-labelledby="removeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="removeModalLabel">Remover Venda</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="removeText"></p>
+                    <!-- Aqui está o input que precisa ter o id id_remove -->
+                    <input type="hidden" id="id_remove">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" onclick="remove()">Confirmar Remoção</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 @stop
 
 @section('js')
     <script>
         //const editModal = new bootstrap.Modal(document.getElementById('editModal'));
-        //const removeModal = new bootstrap.Modal(document.getElementById('removeModal'));
+        const removeModal = new bootstrap.Modal(document.getElementById('removeModal'));
         const salesData = {!! json_encode($salesForJs, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!};
 
 
@@ -181,12 +201,11 @@
             infoModal.show();
         }
 
-        function showEditModal(id, customer_id, sale_date, total, payment_method, installments, observation) {
+        function showEditModal(id, customer_id, sale_date, total, installments, observation) {
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_customer_id').value = customer_id;
             document.getElementById('edit_sale_date').value = sale_date;
             document.getElementById('edit_total').value = total;
-            document.getElementById('edit_payment_method').value = payment_method;
             document.getElementById('edit_installments').value = installments;
             document.getElementById('edit_observation').value = observation;
 
@@ -201,8 +220,8 @@
         }
 
         function remove() {
-            const id = document.getElementById('id_remove').value;
-            document.getElementById('form_' + id).submit();
+            const id = document.getElementById("id_remove").value;
+            document.getElementById("form_" + id).submit();
         }
     </script>
 @stop
