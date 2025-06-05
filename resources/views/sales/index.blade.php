@@ -11,6 +11,8 @@
 @section('content')
     <div class="row my-3">
         <div class="col-md-12">
+            <input type="text" id="searchInput" placeholder="Buscar clientes..." class="form-control mb-3" />
+
             <div class="table-responsive">
                 <table class="table table-striped table-bordered">
                     <thead>
@@ -250,5 +252,29 @@
             const id = document.getElementById("id_remove").value;
             document.getElementById("form_" + id).submit();
         }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) {
+                return map[m];
+            });
+        }
+
+        // Busca simples na tabela
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('table tbody tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
     </script>
 @stop

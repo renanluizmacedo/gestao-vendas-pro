@@ -15,6 +15,10 @@
 
     <div class="row my-3">
         <div class="col-md-12">
+
+            <!-- Input para busca -->
+            <input type="text" id="searchInput" placeholder="Buscar categorias..." class="form-control mb-3" />
+
             <div class="table-responsive">
                 <table class="table table-striped table-bordered">
                     <thead>
@@ -73,6 +77,7 @@
         </div>
     </div>
 
+    <!-- Modal Remover -->
     <div class="modal fade" id="removeModal" tabindex="-1" aria-labelledby="removeModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -105,6 +110,7 @@
         </div>
     </div>
 
+    <!-- Modal Criar -->
     <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <form action="{{ route('customers.store') }}" method="POST" id="createForm">
@@ -138,6 +144,7 @@
         </div>
     </div>
 
+    <!-- Modal Editar -->
     <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <form id="editForm" method="POST">
@@ -177,6 +184,7 @@
 
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         const removeModal = new bootstrap.Modal(document.getElementById('removeModal'));
         const editModal = new bootstrap.Modal(document.getElementById('editModal'));
@@ -254,5 +262,16 @@
                 return map[m];
             });
         }
+
+        // Busca simples na tabela
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('table tbody tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
     </script>
 @stop

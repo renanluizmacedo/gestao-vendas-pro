@@ -14,6 +14,8 @@
 @section('content')
     <div class="row my-3">
         <div class="col-md-12">
+            <input type="text" id="searchInput" placeholder="Buscar produtos..." class="form-control mb-3" />
+
             <div class="table-responsive">
                 <table class="table table-striped table-bordered">
                     <thead>
@@ -29,12 +31,12 @@
                                 <td class="d-flex actions-hide">
                                     <a href="#"
                                         onclick="showEditModal({{ $category->id }}, '{{ addslashes($category->name) }}')"
-                                        class="btn btn-primary mr-3">Editar</a>
-                                    <a nohref style="cursor:pointer"
-                                        onclick="showRemoveModal('{{ $category->id }}', '{{ $category->name }}')"
+                                        class="btn btn-primary me-3">Editar</a>
+                                    <a href="#" style="cursor:pointer"
+                                        onclick="showRemoveModal('{{ $category->id }}', '{{ addslashes($category->name) }}')"
                                         class="text-light btn btn-danger">Excluir</a>
                                     <form action="{{ route('categories.destroy', $category->id) }}" method="POST"
-                                        id="form_{{ $category->id }}">
+                                        id="form_{{ $category->id }}" style="display:none;">
                                         @csrf
                                         @method('DELETE')
                                     </form>
@@ -121,9 +123,10 @@
                 </div>
                 <input type="hidden" id="id_remove">
                 <div class="modal-body text-secondary">
+                    <!-- Texto inserido via JS -->
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeRemoveModal()">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-danger" onclick="remove()">Sim, Remover</button>
                 </div>
             </div>
@@ -144,10 +147,6 @@
             removeModal.show();
         }
 
-        function closeRemoveModal() {
-            removeModal.hide();
-        }
-
         function remove() {
             const id = document.getElementById('id_remove').value;
             const form = document.getElementById('form_' + id);
@@ -166,5 +165,29 @@
             form.action = `/categories/${id}`;
             editModal.show();
         }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) {
+                return map[m];
+            });
+        }
+
+        // Busca simples na tabela
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('table tbody tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
     </script>
 @stop
