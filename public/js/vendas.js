@@ -73,7 +73,6 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
         tabelaVencimentos.appendChild(tr);
 
-        // Atualiza o estado dos botões de remover
         const linhas = tabelaVencimentos.querySelectorAll("tr");
         const botoes = tabelaVencimentos.querySelectorAll(
             ".btn-remover-parcela"
@@ -83,7 +82,6 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.disabled = linhas.length === 1;
         });
 
-        // Ajusta readonly do input da primeira parcela dependendo da quantidade de linhas
         const primeiraLinha = tabelaVencimentos.querySelector("tr");
         if (primeiraLinha) {
             const inputPrimeiraParcela =
@@ -96,35 +94,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 inputPrimeiraParcela.classList.add("bg-light");
                 inputPrimeiraParcela.min = valorTotal.toFixed(2);
             } else {
-                // Mais de 1 parcela => torna editável e habilita input
                 inputPrimeiraParcela.readOnly = false;
-                inputPrimeiraParcela.disabled = false; // <-- aqui
+                inputPrimeiraParcela.disabled = false;
                 inputPrimeiraParcela.classList.remove("bg-light");
                 inputPrimeiraParcela.min = "0";
             }
         }
     }
-function atualizarEstadoPrimeiraParcela() {
-    const linhas = tabelaVencimentos.querySelectorAll("tr");
-    const primeiraLinha = tabelaVencimentos.querySelector("tr");
-    const valorTotal = obterValorTotalVenda();
-
-    if (primeiraLinha) {
-        const inputPrimeiraParcela = primeiraLinha.querySelector(".valor-parcela");
-        if (linhas.length === 1) {
-            inputPrimeiraParcela.value = valorTotal.toFixed(2);
-            inputPrimeiraParcela.readOnly = true;
-            inputPrimeiraParcela.disabled = true;
-            inputPrimeiraParcela.classList.add("bg-light");
-            inputPrimeiraParcela.min = valorTotal.toFixed(2);
-        } else {
-            inputPrimeiraParcela.readOnly = false;
-            inputPrimeiraParcela.disabled = false;
-            inputPrimeiraParcela.classList.remove("bg-light");
-            inputPrimeiraParcela.min = "0";
-        }
-    }
-}
 
     document.addEventListener("click", function (e) {
         if (e.target.closest(".btn-remover-parcela")) {
@@ -186,6 +162,36 @@ function atualizarEstadoPrimeiraParcela() {
 
         atualizarNumerosParcelas();
         atualizarValorParcela();
+
+        // Bloquear input da primeira parcela se só tiver 1 parcela
+        const linhas = tabelaVencimentos.querySelectorAll("tr");
+        if (linhas.length === 1) {
+            const primeiraParcelaInput =
+                linhas[0].querySelector(".valor-parcela");
+            primeiraParcelaInput.readOnly = true;
+            primeiraParcelaInput.disabled = true;
+            primeiraParcelaInput.classList.add("bg-light");
+            primeiraParcelaInput.min = valorTotal.toFixed(2);
+        } else {
+            linhas.forEach((tr) => {
+                const input = tr.querySelector(".valor-parcela");
+                input.readOnly = false;
+                input.disabled = false;
+                input.classList.remove("bg-light");
+                input.min = "0";
+            });
+        }
+
+        // Controle do botão da primeira linha
+        const botoesRemover = tabelaVencimentos.querySelectorAll(
+            ".btn-remover-parcela"
+        );
+        if (botoesRemover.length > 0) {
+            botoesRemover[0].disabled = linhas.length === 1;
+            for (let i = 1; i < botoesRemover.length; i++) {
+                botoesRemover[i].disabled = false;
+            }
+        }
     }
 
     function atualizarNumerosParcelas() {
