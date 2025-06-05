@@ -69,8 +69,6 @@ class SaleController extends Controller
      */
     public function store(StoreSaleRequest $request)
     {
-
-        // ou simplesmente
         try {
             $data = $request->all();
 
@@ -99,12 +97,9 @@ class SaleController extends Controller
                 ]);
             }
 
-            return response()->json(['success' => true, 'message' => 'Venda salva com sucesso!']);
+            return redirect()->route('sales.index')->with('success', 'Venda salva com sucesso!');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro interno: ' . $e->getMessage(),
-            ], 500);
+            return redirect()->back()->withErrors(['error' => 'Erro interno: ' . $e->getMessage()])->withInput();
         }
     }
 

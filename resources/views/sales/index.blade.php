@@ -17,6 +17,7 @@
                         <tr>
                             <th>Cliente</th>
                             <th>Data</th>
+                            <th>Vendedor</th>
                             <th>Valor Total</th>
                             <th>Parcelas</th>
                             <th>Ações</th>
@@ -27,6 +28,7 @@
                             <tr>
                                 <td>{{ $sale->customer->name }}</td>
                                 <td>{{ \Carbon\Carbon::parse($sale->sale_date)->format('d/m/Y') }}</td>
+                                <td>{{ $sale->user->name }}</td>
                                 <td>R$ {{ number_format($sale->total, 2, ',', '.') }}</td>
                                 <td>{{ $sale->installments }}</td>
                                 <td class="d-flex">
@@ -34,6 +36,8 @@
                                         onclick="showInfoModal({{ $sale->id }})">Info</a>
 
                                     <a href="{{ route('sales.edit', $sale->id) }}" class="btn btn-primary mr-2">Editar</a>
+                                    <a href="{{ route('sales.edit', $sale->id) }}"
+                                        class="btn btn-primary mr-2">Relatório</a>
 
                                     <a href="#"
                                         onclick="showRemoveModal({{ $sale->id }}, '{{ $sale->customer->name }}')"
@@ -68,14 +72,20 @@
                         aria-label="Fechar"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="mb-4 px-3 py-2 border rounded bg-light d-flex align-items-center">
+                        <strong class="me-2">Vendedor: {{ $sale->user->name }}</strong>
+                        <span id="saleSellerName" class="fw-semibold text-primary"></span>
+                    </div>
 
-                    <div class="row mb-4">
+                    <div class="row g-4">
                         <div class="col-md-6">
-                            <div class="card shadow-sm">
-                                <div class="card-header bg-light font-weight-bold">🛒 Itens da Venda</div>
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-primary text-white fw-bold">
+                                    🛒 Itens da Venda
+                                </div>
                                 <div class="card-body p-0">
                                     <table class="table table-hover table-striped mb-0" id="itemsTable">
-                                        <thead class="thead-dark">
+                                        <thead class="table-primary">
                                             <tr>
                                                 <th>Produto</th>
                                                 <th>Quantidade</th>
@@ -90,11 +100,13 @@
                         </div>
 
                         <div class="col-md-6">
-                            <div class="card shadow-sm">
-                                <div class="card-header bg-light font-weight-bold">💳 Parcelas</div>
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-primary text-white fw-bold">
+                                    💳 Parcelas
+                                </div>
                                 <div class="card-body p-0">
                                     <table class="table table-hover table-striped mb-0" id="installmentsTable">
-                                        <thead class="thead-dark">
+                                        <thead class="table-primary">
                                             <tr>
                                                 <th>Nº Parcela</th>
                                                 <th>Data de Vencimento</th>
@@ -108,14 +120,14 @@
                         </div>
                     </div>
 
-                    <div id="observationSection" class="mt-3 d-none">
-                        <div class="alert alert-secondary" role="alert">
+                    <div id="observationSection" class="mt-4 d-none">
+                        <div class="alert alert-secondary mb-0" role="alert">
                             <strong>Observações:</strong>
-                            <span id="saleObservation"></span>
+                            <span id="saleObservation" class="ms-2"></span>
                         </div>
                     </div>
-
                 </div>
+
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                 </div>
