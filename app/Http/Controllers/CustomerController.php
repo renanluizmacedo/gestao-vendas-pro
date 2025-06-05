@@ -62,8 +62,16 @@ class CustomerController extends Controller
      */
     public function update(UpdateCustomerRequest $request, Customer $customer)
     {
-        //
+        $customer->update([
+            'name' => $request->name,
+            'cpf' => $request->cpf,
+            'phone' => $request->phone,
+        ]);
+
+        return redirect()->route('customers.index')
+            ->with('success', 'Cliente atualizado com sucesso!');
     }
+
 
     /**
      * Remove the specified resource from storage.
