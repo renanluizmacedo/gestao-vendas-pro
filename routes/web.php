@@ -20,4 +20,5 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('categories', CategoryController::class);
     Route::resource('customers', CustomerController::class);
     Route::resource('sales', SaleController::class);
+    Route::get('/sales/{id}/pdf', [SaleController::class, 'gerarPdf'])->name('sales.pdf');
 });

@@ -8,7 +8,7 @@ use App\Http\Requests\UpdateSaleRequest;
 use App\Models\Product;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Auth;
-
+use PDF;
 
 class SaleController extends Controller
 {
@@ -127,7 +127,18 @@ class SaleController extends Controller
         return view('sales.edit', compact('sale', 'customers', 'paymentMethods', 'products'));
     }
 
+    public function gerarPdf($id)
+    {
+        $sale = Sale::with(['customer', 'user', 'items.product', 'saleInstallments'])->findOrFail($id);
 
+        $pdf = PDF::loadView('reports.sales', compact('sale'));
+
+        // Pode forçar download:
+        // return $pdf->download("venda_{$sale->id}.pdf");
+
+        // Ou abrir no navegador:
+        return $pdf->stream("venda_{$sale->id}.pdf");
+    }
     /**
      * Update the specified resource in storage.
      */

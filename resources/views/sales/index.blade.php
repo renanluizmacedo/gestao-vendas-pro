@@ -36,8 +36,9 @@
                                         onclick="showInfoModal({{ $sale->id }})">Info</a>
 
                                     <a href="{{ route('sales.edit', $sale->id) }}" class="btn btn-primary mr-2">Editar</a>
-                                    <a href="{{ route('sales.edit', $sale->id) }}"
-                                        class="btn btn-primary mr-2">Relatório</a>
+                                    <a href="{{ route('sales.pdf', $sale->id) }}" target="_blank" class="btn btn-secondary">
+                                        Gerar PDF
+                                    </a>
 
                                     <a href="#"
                                         onclick="showRemoveModal({{ $sale->id }}, '{{ $sale->customer->name }}')"
