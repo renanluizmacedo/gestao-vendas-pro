@@ -32,25 +32,45 @@
                                 <td>R$ {{ number_format($sale->total, 2, ',', '.') }}</td>
                                 <td>{{ $sale->installments }}</td>
                                 <td class="d-flex">
-                                    <a href="#" class="btn btn-info mr-2"
-                                        onclick="showInfoModal({{ $sale->id }})">Info</a>
+                                    <div class="ml-2">
+                                        <a href="#" class="btn btn-info d-flex align-items-center me-2"
+                                            onclick="showInfoModal({{ $sale->id }})">
+                                            <i class="fas fa-info-circle me-1"></i> Info
+                                        </a>
+                                    </div>
 
-                                    <a href="{{ route('sales.edit', $sale->id) }}" class="btn btn-primary mr-2">Editar</a>
-                                    <a href="{{ route('sales.pdf', $sale->id) }}" target="_blank" class="btn btn-secondary">
-                                        Gerar PDF
-                                    </a>
+                                    <div class="ml-2">
+                                        <a href="{{ route('sales.edit', $sale->id) }}"
+                                            class="btn btn-primary d-flex align-items-center me-2">
+                                            <i class="fas fa-edit me-1"></i> Editar
+                                        </a>
+                                    </div>
 
-                                    <a href="#"
-                                        onclick="showRemoveModal({{ $sale->id }}, '{{ $sale->customer->name }}')"
-                                        class="btn btn-danger">Excluir</a>
+                                    <div class="ml-2">
+                                        <a href="{{ route('sales.pdf', $sale->id) }}" target="_blank"
+                                            class="btn btn-secondary d-flex align-items-center me-2">
+                                            <i class="fas fa-file-pdf me-1"></i> Gerar PDF
+                                        </a>
+                                    </div>
+
+                                    <div class="ml-2">
+                                        <a href="#"
+                                            onclick="showRemoveModal({{ $sale->id }}, '{{ $sale->customer->name }}')"
+                                            class="btn btn-danger d-flex align-items-center">
+                                            <i class="fas fa-trash me-1"></i> Excluir
+                                        </a>
+                                    </div>
+
 
                                     <form id="form_{{ $sale->id }}" action="{{ route('sales.destroy', $sale->id) }}"
                                         method="POST" style="display: none;">
                                         @csrf
                                         @method('DELETE')
                                     </form>
-
                                 </td>
+
+
+
                             </tr>
                         @endforeach
                     </tbody>
