@@ -9,6 +9,32 @@
 @stop
 
 @section('content')
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>Sucesso:</strong> {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Erro:</strong> {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        </div>
+    @endif
+
+    {{-- ALERTAS DE ERROS DE VALIDAÇÃO --}}
+    @if ($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Erros encontrados:</strong>
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        </div>
+    @endif
     <div class="row my-3">
         <div class="col-md-12">
             <input type="text" id="searchInput" placeholder="Buscar clientes..." class="form-control mb-3" />
@@ -179,19 +205,36 @@
     <script>
         //const editModal = new bootstrap.Modal(document.getElementById('editModal'));
         const removeModal = new bootstrap.Modal(document.getElementById('removeModal'));
+        const infoModal = new bootstrap.Modal(document.getElementById('infoModal'));
+
         const salesData = {!! json_encode($salesForJs, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!};
 
 
-        const infoModal = new bootstrap.Modal(document.getElementById('infoModal'));
+
+
+
+        function showEditModal(id, customer_id, sale_date, total, installments, observation) {
+            document.getElementById('edit_id').value = id;
+            document.getElementById('edit_customer_id').value = customer_id;
+            document.getElementById('edit_sale_date').value = sale_date;
+            document.getElementById('edit_total').value = total;
+            document.getElementById('edit_installments').value = installments;
+            document.getElementById('edit_observation').value = observation;
+
+            document.getElementById('editForm').action = `/sales/${id}`;
+            editModal.show();
+        }
 
         function showInfoModal(saleId) {
-            document.getElementById('saleSellerName').textContent = sale.user.name;
-
+            console.log()
+            "here"
             const sale = salesData.find(sale => sale.id === saleId);
             if (!sale) {
                 alert('Venda não encontrada');
                 return;
             }
+
+            document.getElementById('saleSellerName').textContent = sale.user_name;
 
             const itemsBody = document.querySelector('#itemsTable tbody');
             const installmentsBody = document.querySelector('#installmentsTable tbody');
@@ -228,18 +271,6 @@
             }
 
             infoModal.show();
-        }
-
-        function showEditModal(id, customer_id, sale_date, total, installments, observation) {
-            document.getElementById('edit_id').value = id;
-            document.getElementById('edit_customer_id').value = customer_id;
-            document.getElementById('edit_sale_date').value = sale_date;
-            document.getElementById('edit_total').value = total;
-            document.getElementById('edit_installments').value = installments;
-            document.getElementById('edit_observation').value = observation;
-
-            document.getElementById('editForm').action = `/sales/${id}`;
-            editModal.show();
         }
 
         function showRemoveModal(id, name) {
